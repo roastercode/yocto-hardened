@@ -1,0 +1,5 @@
+# Rootfs pré-labelé au build time — pas de relabeling au premier boot.
+# Activer le mode enforcing selon /etc/selinux/config
+if grep -q "^SELINUX=enforcing" /etc/selinux/config 2>/dev/null; then
+    ${SETENFORCE} 1
+fi
