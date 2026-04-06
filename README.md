@@ -1,6 +1,7 @@
 # yocto-hardened
 
-Hardened Yocto layer for studies — custom distro and image with progressive security hardening.
+Hardened Yocto layer — custom distro and image with progressive security hardening.  
+Study project: from minimal image to a fully hardened OS running on real hardware.
 
 ## Layer: meta-custom
 
@@ -9,7 +10,9 @@ Custom Yocto layer providing:
 - A hardened image (`custom-image`)
 - Example recipe (`hello-custom`)
 
-## Hardening Status
+---
+
+## Overall Hardening Status
 
 | Level | Measure | Status |
 |-------|---------|--------|
@@ -26,64 +29,77 @@ Custom Yocto layer providing:
 
 ---
 
-## Branch: ext4-dm-verity-selinux
+## Branches
 
-This branch implements **Option B**: ext4 + dm-verity + SELinux enforcing, targeting real hardware deployment (BeagleBone Black + external HDD).
+### `ext4-dm-verity-selinux` — Full hardening, BeagleBone Black + external HDD
+
+Target: **BeagleBone Black** booting from SD card, rootfs on **external HDD (USB/SATA)**.
+
+- ext4 + dm-verity + SELinux enforcing
+- U-Boot passes root hash at boot
+- Full integrity verification at runtime
+
+**Current state:**
+- ✅ SELinux enforcing with build-time labeling (`getenforce` → `Enforcing`, 0 `unlabeled_t` files)
+- ✅ dm-verity kernel support built
+- 🔧 dm-verity bootloader integration (U-Boot root hash passing)
+- 🔧 AVC denials at boot to resolve (hwclock, busybox, overlayfs)
+- 🔲 Port to BeagleBone Black (MACHINE target + BSP layer)
+- 🔲 Validate on real hardware
+
+### `squashfs-selinux-permissive` — Compact image, BeagleBone Black standalone
+
+Target: **BeagleBone Black** standalone, rootfs on **SD card or eMMC**.
+
+- squashfs (native read-only, compressed — suited for constrained flash storage)
+- SELinux permissive (first step, enforce once policy is refined)
+
+**Current state:**
+- 🔧 Base image boots in QEMU
+- 🔲 SELinux policy refinement → switch to enforcing
+- 🔲 Port to BeagleBone Black
+- 🔲 Validate on real hardware
 
 ---
 
-## Progress
-
-### D6 — SELinux enforcing ✅
-
-SELinux is fully operational in enforcing mode with build-time labeling:
-
-- `getenforce` returns `Enforcing` at boot
-- **0 `unlabeled_t` files** at boot — all files correctly labeled at build time
-- No restorecon at first boot (rootfs pre-labeled via `setfiles` with `refpolicy-targeted`)
-
-**Key issues solved during development:**
+## Key lessons learned (ext4-dm-verity-selinux)
 
 | Problem | Root cause | Fix |
 |---------|-----------|-----|
-| `unlabeled_t` on all files | `selinux_set_labels` override not applied | `inherit selinux-image` must come **before** the function override in the recipe |
-| `setfiles` writing `"kernel"` context | `FC` variable name collides with BitBake's Fortran compiler variable | Renamed to `SEL_FC`, `SEL_FC_LOCAL`, `SEL_POLICY` |
-| `setfiles` validating against host (Gentoo) policy | No `-c policyfile` flag → host kernel maps unknown types to `"kernel"` SID | Added `-c ${SEL_POLICY}` to validate against target `policy.33` |
-| Stale ext4 image with wrong xattrs | sstate caching the old image | `bitbake custom-image -c cleansstate && bitbake custom-image` required after any labeling fix |
-
-### D7 — dm-verity kernel support ✅
-
-- Kernel config fragment (`dm-verity.cfg`) enables `CONFIG_DM_VERITY`
-- `dm-verity-image.bbclass` generates the hash tree post-image
+| `selinux_set_labels` override ignored | `inherit selinux-image` appeared **after** the function definition | Move all `inherit` statements **before** function definitions |
+| `setfiles` writing `"kernel"` as context | `FC` variable collides with BitBake's Fortran compiler variable | Rename to `SEL_FC`, `SEL_FC_LOCAL`, `SEL_POLICY` |
+| `setfiles` validating against host (Gentoo) SELinux policy | Missing `-c policyfile` → host kernel maps unknown types to `"kernel"` SID | Add `-c ${SEL_POLICY}` to validate against target `policy.33` |
+| Stale ext4 with wrong xattrs | sstate caching the pre-fix image | `bitbake custom-image -c cleansstate && bitbake custom-image` after any labeling change |
 
 ---
 
-## Current known issues / Next steps
+## Roadmap
 
-### Boot-time AVC denials (policy refinement needed)
+```
+Phase 1 — QEMU validation (done)
+  ✅ SELinux enforcing, 0 unlabeled files
+  ✅ dm-verity kernel support
+  ✅ read-only rootfs + overlayfs-etc
 
-Several processes are denied at boot due to missing policy rules:
+Phase 2 — Policy refinement + dm-verity bootloader (in progress)
+  🔧 Fix AVC denials at boot (hwclock, busybox, overlayfs)
+  🔧 U-Boot integration: pass dm-verity root hash at boot
+  🔧 squashfs branch: SELinux permissive → enforcing
 
-- **hwclock**: denied `search` on overlay — needs `var_t` or `tmpfs_t` allow rule
-- **dmesg / busybox**: denied `map` on `busybox.nosuid` — busybox context in `file_contexts.local` needs adjustment (`bin_t` or `shell_exec_t` instead of `init_exec_t`)
-- **overlayfs**: `errno: 13` on `/var/volatile/.lib-work/work` — SELinux denies overlayfs setup for the volatile partition
-- **find**: denied `read`/`getattr` on several paths — shell session context (`local_login_t`) lacks permissions
+Phase 3 — BeagleBone Black port
+  🔲 Add meta-ti or meta-arm BSP layer
+  🔲 MACHINE = "beaglebone-yocto"
+  🔲 Adapt kernel config and bootloader
 
-These do not prevent the system from booting or running, but represent policy gaps to address.
+Phase 4 — Hardware deployment validation
+  🔲 squashfs image on BBB SD/eMMC
+  🔲 ext4 + dm-verity image on BBB + external HDD
+  🔲 Full boot-to-login on real hardware
 
-### D8 — dm-verity bootloader integration 🔧
-
-Kernel support is built and the hash tree is generated. The next step is passing the root hash to the bootloader at boot time:
-- For BeagleBone Black (U-Boot): pass `dm-mod.create=...` or use a verity-aware initramfs
-- Validate read-only enforcement at runtime
-
-### Hardware deployment
-
-The immediate goal is a fully functional image on:
-- **BeagleBone Black** (ARM Cortex-A8) — requires a new `MACHINE` target and BSP layer
-- **External HDD** — root filesystem on USB/SATA, verity hash stored separately
-
-Once hardware deployment is validated, the tutorial restarts from scratch for a deeper understanding of each step and tool.
+Phase 5 — Deep-dive tutorial (restart from scratch)
+  After hardware validation, restart the full tutorial
+  with a step-by-step deep dive into each tool and concept.
+```
 
 ---
 
