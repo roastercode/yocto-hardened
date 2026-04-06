@@ -20,31 +20,72 @@ Custom Yocto layer providing:
 | D5 | Custom hardened distro (`poky-hardened`) | ✅ Done |
 | D6 | SELinux enforcing — build-time labeling | ✅ Done |
 | D7 | dm-verity kernel support | ✅ Done |
-| D8 | dm-verity bootloader integration | 🔲 Todo |
+| D8 | dm-verity bootloader integration | 🔧 In progress |
 | D9 | IMA/EVM (runtime file integrity) | 🔲 Todo |
 | D10 | Secure Boot | 🔲 Todo |
 
+---
+
 ## Branch: ext4-dm-verity-selinux
 
-This branch implements **Option B**: ext4 + dm-verity + SELinux enforcing.
+This branch implements **Option B**: ext4 + dm-verity + SELinux enforcing, targeting real hardware deployment (BeagleBone Black + external HDD).
 
-### What works
+---
 
-- SELinux enforcing at boot (`getenforce` → `Enforcing`)
-- Build-time SELinux labeling via `setfiles` with `refpolicy-targeted`
-  - Override of `selinux_set_labels` to validate contexts against the **target** policy (`-c policy.33`), not the build host policy
-  - Workaround for BitBake variable collision: `FC`/`FC_LOCAL` renamed to `SEL_FC`/`SEL_FC_LOCAL` (avoid conflict with the `FC` Fortran compiler BitBake variable)
-  - `inherit` ordering fix: `selinux-image` must be inherited **before** the function override in the recipe
-  - After any labeling fix: `bitbake custom-image -c cleansstate && bitbake custom-image` required to flush the sstate-cached ext4
-- overlayfs-etc: `/etc` writable on tmpfs overlay
-- `selinux-init` replaced: no restorecon at first boot (rootfs pre-labeled at build time)
+## Progress
 
-### Known issues / Next steps
+### D6 — SELinux enforcing ✅
 
-- **AVC denials at boot**: hwclock, dmesg, find denied — policy missing rules for several operations. Needs policy refinement or additional `file_contexts.local` entries.
-- **overlayfs + SELinux**: `errno: 13` on `/var/volatile/.lib-work/work` — SELinux denies overlayfs setup for the volatile partition.
-- **busybox contexts**: `init_exec_t` in `file_contexts.local` may need adjustment (`bin_t` or `shell_exec_t`).
-- **dm-verity bootloader integration**: kernel support built, hash tree generated, but root hash not yet passed at boot.
+SELinux is fully operational in enforcing mode with build-time labeling:
+
+- `getenforce` returns `Enforcing` at boot
+- **0 `unlabeled_t` files** at boot — all files correctly labeled at build time
+- No restorecon at first boot (rootfs pre-labeled via `setfiles` with `refpolicy-targeted`)
+
+**Key issues solved during development:**
+
+| Problem | Root cause | Fix |
+|---------|-----------|-----|
+| `unlabeled_t` on all files | `selinux_set_labels` override not applied | `inherit selinux-image` must come **before** the function override in the recipe |
+| `setfiles` writing `"kernel"` context | `FC` variable name collides with BitBake's Fortran compiler variable | Renamed to `SEL_FC`, `SEL_FC_LOCAL`, `SEL_POLICY` |
+| `setfiles` validating against host (Gentoo) policy | No `-c policyfile` flag → host kernel maps unknown types to `"kernel"` SID | Added `-c ${SEL_POLICY}` to validate against target `policy.33` |
+| Stale ext4 image with wrong xattrs | sstate caching the old image | `bitbake custom-image -c cleansstate && bitbake custom-image` required after any labeling fix |
+
+### D7 — dm-verity kernel support ✅
+
+- Kernel config fragment (`dm-verity.cfg`) enables `CONFIG_DM_VERITY`
+- `dm-verity-image.bbclass` generates the hash tree post-image
+
+---
+
+## Current known issues / Next steps
+
+### Boot-time AVC denials (policy refinement needed)
+
+Several processes are denied at boot due to missing policy rules:
+
+- **hwclock**: denied `search` on overlay — needs `var_t` or `tmpfs_t` allow rule
+- **dmesg / busybox**: denied `map` on `busybox.nosuid` — busybox context in `file_contexts.local` needs adjustment (`bin_t` or `shell_exec_t` instead of `init_exec_t`)
+- **overlayfs**: `errno: 13` on `/var/volatile/.lib-work/work` — SELinux denies overlayfs setup for the volatile partition
+- **find**: denied `read`/`getattr` on several paths — shell session context (`local_login_t`) lacks permissions
+
+These do not prevent the system from booting or running, but represent policy gaps to address.
+
+### D8 — dm-verity bootloader integration 🔧
+
+Kernel support is built and the hash tree is generated. The next step is passing the root hash to the bootloader at boot time:
+- For BeagleBone Black (U-Boot): pass `dm-mod.create=...` or use a verity-aware initramfs
+- Validate read-only enforcement at runtime
+
+### Hardware deployment
+
+The immediate goal is a fully functional image on:
+- **BeagleBone Black** (ARM Cortex-A8) — requires a new `MACHINE` target and BSP layer
+- **External HDD** — root filesystem on USB/SATA, verity hash stored separately
+
+Once hardware deployment is validated, the tutorial restarts from scratch for a deeper understanding of each step and tool.
+
+---
 
 ## Usage
 
