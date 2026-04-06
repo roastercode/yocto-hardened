@@ -3,4 +3,4 @@ recipes-core/images/credentials.inc
                                                                                                                                                                                            
 # Artefacts de build
 *.pyc                                                                                                                                                                                      
-__pycache__/
+__pycache__/*~
