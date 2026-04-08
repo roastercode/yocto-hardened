@@ -1,0 +1,62 @@
+SUMMARY = "Slurm Workload Manager"
+DESCRIPTION = "Slurm — ordonnanceur de jobs HPC"
+HOMEPAGE = "https://slurm.schedmd.com"
+LICENSE = "GPL-2.0-only"
+LIC_FILES_CHKSUM = "file://COPYING;md5=1d61dca3f6cbd0e6c847641f8fd4c233"
+
+SRC_URI = "https://download.schedmd.com/slurm/slurm-${PV}.tar.bz2 \
+           file://slurmctld.init \
+           file://slurmd.init \
+           file://slurm.conf"
+SRC_URI[sha256sum] = "09d07c7f625c0fdf4eb9116b3be4f15e7a1bfe83a0744bddf98cbd82ee2fb6b4"
+
+inherit autotools pkgconfig useradd
+
+DEPENDS = "munge pmix hwloc libevent openssl zlib libyaml lz4 json-c curl"
+
+USERADD_PACKAGES = "${PN}"
+USERADD_PARAM:${PN} = "--system --home-dir /var/lib/slurm \
+                        --shell /sbin/nologin \
+                        --user-group slurm"
+
+EXTRA_OECONF = " \
+    --without-mysql_config \
+    --disable-pam \
+    --disable-sview \
+    --with-munge=${STAGING_DIR_TARGET}${prefix} \
+    --with-pmix=${STAGING_DIR_TARGET}${prefix} \
+    --with-hwloc=${STAGING_DIR_TARGET}${prefix} \
+    --disable-static \
+"
+
+INSANE_SKIP += "configure-unsafe dev-so"
+RDEPENDS:${PN} += "json-c curl"
+LDFLAGS:append = " -Wl,--sysroot=${STAGING_DIR_TARGET}"
+
+do_configure() {
+    cd ${B}
+    oe_runconf
+}
+
+do_install:append() {
+    install -d ${D}/var/lib/slurm
+    install -d ${D}/etc/slurm
+
+    install -d ${D}${sysconfdir}/init.d
+    install -m 0755 ${WORKDIR}/slurmctld.init ${D}${sysconfdir}/init.d/slurmctld
+    install -m 0755 ${WORKDIR}/slurmd.init    ${D}${sysconfdir}/init.d/slurmd
+    install -m 0644 ${WORKDIR}/slurm.conf     ${D}/etc/slurm/slurm.conf
+
+    rm -rf ${D}/run
+}
+
+FILES:${PN} += " \
+    /var/lib/slurm \
+    /etc/slurm \
+    ${sysconfdir}/init.d/slurmctld \
+    ${sysconfdir}/init.d/slurmd \
+"
+
+PACKAGES =+ "${PN}-slurmctld ${PN}-slurmd"
+FILES:${PN}-slurmctld = "${sbindir}/slurmctld ${sysconfdir}/init.d/slurmctld"
+FILES:${PN}-slurmd    = "${sbindir}/slurmd ${sysconfdir}/init.d/slurmd"

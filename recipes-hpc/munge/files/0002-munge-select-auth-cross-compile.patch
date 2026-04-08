@@ -1,0 +1,12 @@
+--- a/m4/x_ac_select_auth_method.m4	2026-04-09 20:07:38.370051921 +0200
++++ b/m4/x_ac_select_auth_method.m4	2026-04-09 20:07:38.397872685 +0200
+@@ -71,7 +71,8 @@
+   X_AC_CHECK_LOCAL_PEERCRED
+   AC_CHECK_TYPES(struct strrecvfd, [], [], [#include <stropts.h>])
+   X_AC_CHECK_FIFO_RECVFD
+-  AC_CHECK_FILES(/dev/spx)
++  dnl AC_CHECK_FILES(/dev/spx) -- disabled: cross-compile, Linux has no /dev/spx
++  ac_cv_file__dev_spx=no
+ 
+   AC_MSG_CHECKING([for authentication method])
+   if   test AS_VAR_GET(ac_cv_func_getpeereid) = yes ; then

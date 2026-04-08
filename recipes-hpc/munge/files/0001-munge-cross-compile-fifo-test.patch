@@ -1,0 +1,10 @@
+--- a/m4/x_ac_check_fifo_recvfd.m4	2026-04-08 15:53:06.290317952 +0200
++++ b/m4/x_ac_check_fifo_recvfd.m4	2026-04-08 15:53:28.796389586 +0200
+@@ -53,6 +53,7 @@
+ return (rc); ]]
+       )],
+       AS_VAR_SET(x_ac_cv_check_fifo_recvfd, yes),
++      AS_VAR_SET(x_ac_cv_check_fifo_recvfd, no),
+       AS_VAR_SET(x_ac_cv_check_fifo_recvfd, no)
+     )]
+   )

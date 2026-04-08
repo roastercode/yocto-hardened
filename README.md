@@ -1,6 +1,6 @@
-# meta-custom
+# Yocto HPC
 
-Couche Yocto custom pour Spartian-1. Scarthgap / poky-hardened.
+Couche Yocto custom Scarthgap / poky-hardened.
 
 ## Branches
 
@@ -30,16 +30,25 @@ les commandes Slurm, MPI, NFS, modules, benchmarks.
 
 | Image | Basée sur | Contenu |
 |-------|-----------|---------|
-| `hpc-image-master` | custom-image | slurm-slurmctld, munge, nfs-server, openmpi, lmod |
-| `hpc-image-compute` | custom-image | slurm-slurmd, munge, nfs-client, openmpi |
+| `hpc-image-master` | custom-image | slurm-slurmctld, munge, nfs-server, mpich |
+| `hpc-image-compute` | custom-image | slurm-slurmd, munge, nfs-client, mpich |
 | `hpc-image-storage` | custom-image | nfs-server, e2fsprogs |
 
 ### Recettes ajoutées
 
-- `recipes-hpc/munge/` — authentification MUNGE
-- `recipes-hpc/slurm/` — scheduler Slurm 23.x
-- `recipes-hpc/openmpi/` — si non fourni par meta-oe (sinon mpich)
-- `recipes-hpc/lmod/` — environment modules
+| Recette | Version | Notes |
+|---------|---------|-------|
+| `recipes-hpc/libevent/` | 2.1.12 | Dépendance munge/slurm |
+| `recipes-hpc/munge/` | 0.5.15 | Auth cluster, 2 patches cross-compile |
+| `recipes-hpc/pmix/` | 5.0.3 | Process Management Interface |
+| `recipes-hpc/slurm/` | 23.11.7 | Ordonnanceur HPC |
+
+### Patches cross-compilation (hôte Gentoo)
+
+- `munge/0001` — fix `AC_RUN_IFELSE` test fifo (impossible en cross-compile)
+- `munge/0002` — fix `AC_CHECK_FILES /dev/spx` (Linux n'a pas /dev/spx)
+- `slurm` — désactivation sview/glib (`AM_PATH_GLIB_2_0` non disponible)
+- `INSANE_SKIP += configure-unsafe` — warning linker `/usr/lib` hôte Gentoo
 
 ### Stack logicielle hôte (Gentoo)
 
@@ -56,7 +65,9 @@ les commandes Slurm, MPI, NFS, modules, benchmarks.
 - read-only rootfs
 - /etc writable via overlayfs tmpfs
 - CVE checking activé
+- PAM activé
 - Pas de debug-tweaks
+- Gentoo ajouté aux distros validées (`SANITY_TESTED_DISTROS`)
 
 ## Prérequis build
 
