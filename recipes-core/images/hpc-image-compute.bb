@@ -30,6 +30,7 @@ IMAGE_INSTALL = " \
     hwloc \
     procps \
     util-linux \
+    sudo \
     ${CORE_IMAGE_EXTRA_INSTALL} \
 "
 
@@ -43,4 +44,50 @@ create_hpc_dirs() {
     mkdir -p ${IMAGE_ROOTFS}/var/volatile/log/slurm
     mkdir -p ${IMAGE_ROOTFS}/etc/munge
     mkdir -p ${IMAGE_ROOTFS}/etc/slurm
+}
+
+# Config réseau statique pour le cluster
+ROOTFS_POSTPROCESS_COMMAND:append = " setup_hpc_network;"
+setup_hpc_network() {
+    cat >> ${IMAGE_ROOTFS}/etc/network/interfaces << 'NETEOF'
+
+# Interface HPC cluster
+auto eth0
+iface eth0 inet dhcp
+NETEOF
+}
+
+# Pré-générer les clés SSH au build time
+
+ROOTFS_POSTPROCESS_COMMAND:append = " preseed_ssh_keys;"
+preseed_ssh_keys() {
+    # Utiliser ssh-keygen de l'hôte (disponible sur Gentoo)
+    export PATH="/usr/bin:${PATH}"
+    ssh-keygen -t rsa -b 2048 -f ${IMAGE_ROOTFS}/etc/ssh/ssh_host_rsa_key -N "" -C ""
+    ssh-keygen -t ecdsa -f ${IMAGE_ROOTFS}/etc/ssh/ssh_host_ecdsa_key -N "" -C ""
+    ssh-keygen -t ed25519 -f ${IMAGE_ROOTFS}/etc/ssh/ssh_host_ed25519_key -N "" -C ""
+    chmod 600 ${IMAGE_ROOTFS}/etc/ssh/ssh_host_rsa_key \
+              ${IMAGE_ROOTFS}/etc/ssh/ssh_host_ecdsa_key \
+              ${IMAGE_ROOTFS}/etc/ssh/ssh_host_ed25519_key
+    if [ -f ${IMAGE_ROOTFS}/etc/selinux/config ]; then
+        sed -i 's/SELINUX=enforcing/SELINUX=permissive/' ${IMAGE_ROOTFS}/etc/selinux/config
+    fi
+}
+
+ROOTFS_POSTPROCESS_COMMAND:append = " setup_hpcadmin;"
+setup_hpcadmin() {
+    # Créer utilisateur hpcadmin avec sudo
+    useradd -R ${IMAGE_ROOTFS} -m -s /bin/bash -G sudo hpcadmin 2>/dev/null || true
+
+    # Déployer la clé SSH publique
+    mkdir -p ${IMAGE_ROOTFS}/home/hpcadmin/.ssh
+    chmod 700 ${IMAGE_ROOTFS}/home/hpcadmin/.ssh
+    cp ${THISDIR}/files/hpclab_admin.pub        ${IMAGE_ROOTFS}/home/hpcadmin/.ssh/authorized_keys
+    chmod 600 ${IMAGE_ROOTFS}/home/hpcadmin/.ssh/authorized_keys
+    chown -R 1000:1000 ${IMAGE_ROOTFS}/home/hpcadmin/.ssh
+
+    # Sudo sans mot de passe pour hpcadmin (labo HPC)
+    mkdir -p ${IMAGE_ROOTFS}/etc/sudoers.d
+    echo "hpcadmin ALL=(ALL) NOPASSWD: ALL" >         ${IMAGE_ROOTFS}/etc/sudoers.d/hpcadmin
+    chmod 440 ${IMAGE_ROOTFS}/etc/sudoers.d/hpcadmin
 }
