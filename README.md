@@ -1,6 +1,7 @@
 # yocto-hardened
 
-Hardened Yocto layer — custom distro and image with progressive security hardening.  
+Hardened Yocto layer — custom distro and image with progressive security hardening.
+
 Study project: from minimal image to a fully hardened OS running on real hardware.
 
 ## Layer: meta-custom
@@ -30,6 +31,13 @@ Custom Yocto layer providing:
 ---
 
 ## Branches
+
+| Branche | Description | Cible |
+|---------|-------------|-------|
+| `main` | Base minimale, point de départ | QEMU |
+| `ext4-dm-verity-selinux` | Image durcie : ext4 + dm-verity + SELinux enforcing | BeagleBone Black |
+| `squashfs-selinux-permissive` | Image squashfs + SELinux permissive | BeagleBone Black |
+| `yocto-hpc` | Mini-cluster HPC virtuel (5 VMs KVM) | QEMU/KVM |
 
 ### `ext4-dm-verity-selinux` — Full hardening, BeagleBone Black + external HDD
 
@@ -68,38 +76,37 @@ Target: **BeagleBone Black** standalone, rootfs on **SD card or eMMC**.
 |---------|-----------|-----|
 | `selinux_set_labels` override ignored | `inherit selinux-image` appeared **after** the function definition | Move all `inherit` statements **before** function definitions |
 | `setfiles` writing `"kernel"` as context | `FC` variable collides with BitBake's Fortran compiler variable | Rename to `SEL_FC`, `SEL_FC_LOCAL`, `SEL_POLICY` |
-| `setfiles` validating against host (Gentoo) SELinux policy | Missing `-c policyfile` → host kernel maps unknown types to `"kernel"` SID | Add `-c ${SEL_POLICY}` to validate against target `policy.33` |
-| Stale ext4 with wrong xattrs | sstate caching the pre-fix image | `bitbake custom-image -c cleansstate && bitbake custom-image` after any labeling change |
+| `setfiles` validating against host (Gentoo) SELinux policy | Missing `-c policyfile` | Add `-c ${SEL_POLICY}` to validate against target `policy.33` |
+| Stale ext4 with wrong xattrs | sstate caching the pre-fix image | `bitbake custom-image -c cleansstate && bitbake custom-image` |
 
 ---
 
 ## Roadmap
 
-```
 Phase 1 — QEMU validation (done)
-  ✅ SELinux enforcing, 0 unlabeled files
-  ✅ dm-verity kernel support
-  ✅ read-only rootfs + overlayfs-etc
+✅ SELinux enforcing, 0 unlabeled files
+✅ dm-verity kernel support
+✅ read-only rootfs + overlayfs-etc
 
 Phase 2 — Policy refinement + dm-verity bootloader (in progress)
-  🔧 Fix AVC denials at boot (hwclock, busybox, overlayfs)
-  🔧 U-Boot integration: pass dm-verity root hash at boot
-  🔧 squashfs branch: SELinux permissive → enforcing
+🔧 Fix AVC denials at boot (hwclock, busybox, overlayfs)
+🔧 U-Boot integration: pass dm-verity root hash at boot
+🔧 squashfs branch: SELinux permissive → enforcing
 
 Phase 3 — BeagleBone Black port
-  🔲 Add meta-ti or meta-arm BSP layer
-  🔲 MACHINE = "beaglebone-yocto"
-  🔲 Adapt kernel config and bootloader
+🔲 Add meta-ti or meta-arm BSP layer
+🔲 MACHINE = "beaglebone-yocto"
+🔲 Adapt kernel config and bootloader
 
 Phase 4 — Hardware deployment validation
-  🔲 squashfs image on BBB SD/eMMC
-  🔲 ext4 + dm-verity image on BBB + external HDD
-  🔲 Full boot-to-login on real hardware
+🔲 squashfs image on BBB SD/eMMC
+🔲 ext4 + dm-verity image on BBB + external HDD
+🔲 Full boot-to-login on real hardware
 
-Phase 5 — Deep-dive tutorial (restart from scratch)
-  After hardware validation, restart the full tutorial
-  with a step-by-step deep dive into each tool and concept.
-```
+Phase 5 — HPC cluster (done in yocto-hpc branch)
+✅ 5 VMs KVM avec Slurm, MPI, NFS
+✅ SSH par clé, hpcadmin sudo
+
 
 ---
 
@@ -107,12 +114,11 @@ Phase 5 — Deep-dive tutorial (restart from scratch)
 
 ### Prerequisites
 
-```
 poky (scarthgap)
 meta-openembedded/meta-oe
 meta-openembedded/meta-python
 meta-selinux
-```
+
 
 ### Setup
 
@@ -125,6 +131,7 @@ DISTRO = "poky-hardened"
 
 # Create credentials (never commit this file)
 cp recipes-core/images/credentials.inc.example recipes-core/images/credentials.inc
+
 # Edit credentials.inc with your hashed password
 # Generate hash: openssl passwd -6 "yourpassword"
 ```
