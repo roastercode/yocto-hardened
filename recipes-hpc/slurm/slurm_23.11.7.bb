@@ -7,7 +7,12 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=1d61dca3f6cbd0e6c847641f8fd4c233"
 SRC_URI = "https://download.schedmd.com/slurm/slurm-${PV}.tar.bz2 \
            file://slurmctld.init \
            file://slurmd.init \
-           file://slurm.conf"
+           file://slurm.conf \
+           file://0001-slurm-fix-all-plugins-cross-compile-undefined-symbol.patch \
+           file://0002-slurm-disable-default-prep-script-plugin.patch \
+           file://0003-slurm-slurmctld-export-dynamic.patch \
+           file://0004-slurm-plugin-use-rtld-global.patch \
+           file://0005-slurm-add-stubs-to-libslurmfull.patch"
 SRC_URI[sha256sum] = "09d07c7f625c0fdf4eb9116b3be4f15e7a1bfe83a0744bddf98cbd82ee2fb6b4"
 
 inherit autotools pkgconfig useradd
@@ -60,3 +65,38 @@ FILES:${PN} += " \
 PACKAGES =+ "${PN}-slurmctld ${PN}-slurmd"
 FILES:${PN}-slurmctld = "${sbindir}/slurmctld ${sysconfdir}/init.d/slurmctld"
 FILES:${PN}-slurmd    = "${sbindir}/slurmd ${sysconfdir}/init.d/slurmd"
+
+do_install:append() {
+    # Supprimer les plugins Cray (non applicables sur x86/KVM)
+    rm -f ${D}/usr/lib/slurm/select_cray_aries.so
+    rm -f ${D}/usr/lib/slurm/core_spec_cray_aries.so
+    rm -f ${D}/usr/lib/slurm/job_submit_cray_aries.so
+    rm -f ${D}/usr/lib/slurm/proctrack_cray_aries.so
+    rm -f ${D}/usr/lib/slurm/switch_cray_aries.so
+    rm -f ${D}/usr/lib/slurm/task_cray_aries.so
+    rm -f ${D}/usr/lib/slurm/node_features_knl_cray.so
+    rm -f ${D}/usr/lib/slurm/power_cray_aries.so
+    rm -f ${D}/usr/lib/slurm/mpi_cray_shasta.so
+
+    # Supprimer prep_script.so : symbole send_slurmd_conf_lite
+    # uniquement dans slurmd, pas exporté par libslurm — bug cross-compile
+    rm -f ${D}/usr/lib/slurm/prep_script.so
+
+    # Slurm installe les binaires avec le préfixe cross-compilateur
+    # Créer des symlinks sans préfixe pour un usage normal
+    for bin in slurmctld slurmd slurmdbd slurmstepd sackd; do
+        if [ -f ${D}${sbindir}/x86_64-poky-linux-${bin} ]; then
+            ln -sf x86_64-poky-linux-${bin} ${D}${sbindir}/${bin}
+        fi
+    done
+    for bin in srun sbatch squeue sinfo scancel scontrol sacct salloc; do
+        if [ -f ${D}${bindir}/x86_64-poky-linux-${bin} ]; then
+            ln -sf x86_64-poky-linux-${bin} ${D}${bindir}/${bin}
+        fi
+    done
+}
+
+# Supprimer le plugin prep_script.so qui a un symbole indéfini
+# (send_slurmd_conf_lite non résolu en cross-compilation)
+do_install:append() {
+}

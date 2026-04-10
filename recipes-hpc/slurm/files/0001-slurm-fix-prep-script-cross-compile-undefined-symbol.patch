@@ -1,0 +1,882 @@
+--- a/b/src/plugins/accounting_storage/mysql/Makefile.am	2026-04-10 13:14:15.764370906 +0200
++++ b/src/plugins/accounting_storage/mysql/Makefile.am	2026-04-10 13:14:15.766103346 +0200
+@@ -32,7 +32,7 @@
+ 
+ # Mysql storage plugin.
+ accounting_storage_mysql_la_SOURCES = $(AS_MYSQL_SOURCES)
+-accounting_storage_mysql_la_LDFLAGS = $(PLUGIN_FLAGS)
++accounting_storage_mysql_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ accounting_storage_mysql_la_CFLAGS = $(MYSQL_CFLAGS)
+ accounting_storage_mysql_la_LIBADD = \
+ 	$(top_builddir)/src/database/libslurm_mysql.la $(MYSQL_LIBS) \
+--- a/b/src/plugins/accounting_storage/slurmdbd/Makefile.am	2026-04-10 13:14:15.766103346 +0200
++++ b/src/plugins/accounting_storage/slurmdbd/Makefile.am	2026-04-10 13:14:15.767918105 +0200
+@@ -13,7 +13,7 @@
+ 	as_ext_dbd.c as_ext_dbd.h \
+ 	dbd_conn.c dbd_conn.h \
+ 	slurmdbd_agent.c slurmdbd_agent.h
+-accounting_storage_slurmdbd_la_LDFLAGS = $(PLUGIN_FLAGS)
++accounting_storage_slurmdbd_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ 
+ 
+--- a/b/src/plugins/acct_gather_energy/gpu/Makefile.am	2026-04-10 13:14:15.769478150 +0200
++++ b/src/plugins/acct_gather_energy/gpu/Makefile.am	2026-04-10 13:14:15.771102301 +0200
+@@ -11,4 +11,4 @@
+ # AMD gpu energy accounting plugin.
+ acct_gather_energy_gpu_la_SOURCES = acct_gather_energy_gpu.c
+ 
+-acct_gather_energy_gpu_la_LDFLAGS = $(PLUGIN_FLAGS)
++acct_gather_energy_gpu_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/acct_gather_energy/ibmaem/Makefile.am	2026-04-10 13:14:15.771102301 +0200
++++ b/src/plugins/acct_gather_energy/ibmaem/Makefile.am	2026-04-10 13:14:15.772777220 +0200
+@@ -11,4 +11,4 @@
+ # cpu/core energy accounting plugin.
+ acct_gather_energy_ibmaem_la_SOURCES = acct_gather_energy_ibmaem.c
+ 
+-acct_gather_energy_ibmaem_la_LDFLAGS = $(PLUGIN_FLAGS)
++acct_gather_energy_ibmaem_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/acct_gather_energy/ipmi/Makefile.am	2026-04-10 13:14:15.772777220 +0200
++++ b/src/plugins/acct_gather_energy/ipmi/Makefile.am	2026-04-10 13:14:15.774367834 +0200
+@@ -20,7 +20,7 @@
+ 
+ #acct_gather_energy_ipmi_la_CFLAGS = $(MYSQL_CFLAGS)
+ 
+-acct_gather_energy_ipmi_la_LDFLAGS = $(PLUGIN_FLAGS) $(FREEIPMI_LDFLAGS)
++acct_gather_energy_ipmi_la_LDFLAGS = $(PLUGIN_FLAGS) $(FREEIPMI_LDFLAGS) -Wl,--allow-shlib-undefined
+ acct_gather_energy_ipmi_la_LIBADD = $(FREEIPMI_LIBS)
+ 
+ else
+--- a/b/src/plugins/acct_gather_energy/pm_counters/Makefile.am	2026-04-10 13:14:15.774367834 +0200
++++ b/src/plugins/acct_gather_energy/pm_counters/Makefile.am	2026-04-10 13:14:15.775946325 +0200
+@@ -11,4 +11,4 @@
+ # cpu/core energy accounting plugin.
+ acct_gather_energy_pm_counters_la_SOURCES = acct_gather_energy_pm_counters.c
+ 
+-acct_gather_energy_pm_counters_la_LDFLAGS = $(PLUGIN_FLAGS)
++acct_gather_energy_pm_counters_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/acct_gather_energy/rapl/Makefile.am	2026-04-10 13:14:15.775946325 +0200
++++ b/src/plugins/acct_gather_energy/rapl/Makefile.am	2026-04-10 13:14:15.777562800 +0200
+@@ -11,4 +11,4 @@
+ # cpu/core energy accounting plugin.
+ acct_gather_energy_rapl_la_SOURCES = acct_gather_energy_rapl.c
+ 
+-acct_gather_energy_rapl_la_LDFLAGS = $(PLUGIN_FLAGS)
++acct_gather_energy_rapl_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/acct_gather_energy/xcc/Makefile.am	2026-04-10 13:14:15.777562800 +0200
++++ b/src/plugins/acct_gather_energy/xcc/Makefile.am	2026-04-10 13:14:15.779219376 +0200
+@@ -18,7 +18,7 @@
+ 
+ #acct_gather_energy_xcc_la_CFLAGS = $(MYSQL_CFLAGS)
+ 
+-acct_gather_energy_xcc_la_LDFLAGS = $(PLUGIN_FLAGS) $(FREEIPMI_LDFLAGS)
++acct_gather_energy_xcc_la_LDFLAGS = $(PLUGIN_FLAGS) $(FREEIPMI_LDFLAGS) -Wl,--allow-shlib-undefined
+ acct_gather_energy_xcc_la_LIBADD = $(FREEIPMI_LIBS)
+ 
+ else
+--- a/b/src/plugins/acct_gather_filesystem/lustre/Makefile.am	2026-04-10 13:14:15.780687073 +0200
++++ b/src/plugins/acct_gather_filesystem/lustre/Makefile.am	2026-04-10 13:14:15.782350575 +0200
+@@ -14,4 +14,4 @@
+ # Infiniband accounting lustre plugin.
+ acct_gather_filesystem_lustre_la_SOURCES = acct_gather_filesystem_lustre.c
+ 
+-acct_gather_filesystem_lustre_la_LDFLAGS = $(PLUGIN_FLAGS)
++acct_gather_filesystem_lustre_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/acct_gather_interconnect/ofed/Makefile.am	2026-04-10 13:14:15.783828420 +0200
++++ b/src/plugins/acct_gather_interconnect/ofed/Makefile.am	2026-04-10 13:14:15.785415155 +0200
+@@ -19,7 +19,7 @@
+ 
+ acct_gather_interconnect_ofed_la_CFLAGS = $(OFED_CPPFLAGS)
+ 
+-acct_gather_interconnect_ofed_la_LDFLAGS = $(PLUGIN_FLAGS) $(OFED_LDFLAGS)
++acct_gather_interconnect_ofed_la_LDFLAGS = $(PLUGIN_FLAGS) $(OFED_LDFLAGS) -Wl,--allow-shlib-undefined
+ acct_gather_interconnect_ofed_la_LIBADD = $(OFED_LIBS)
+ 
+ else
+--- a/b/src/plugins/acct_gather_interconnect/sysfs/Makefile.am	2026-04-10 13:14:15.785415155 +0200
++++ b/src/plugins/acct_gather_interconnect/sysfs/Makefile.am	2026-04-10 13:14:15.786919887 +0200
+@@ -9,4 +9,4 @@
+ pkglib_LTLIBRARIES = acct_gather_interconnect_sysfs.la
+ 
+ acct_gather_interconnect_sysfs_la_SOURCES = acct_gather_interconnect_sysfs.c
+-acct_gather_interconnect_sysfs_la_LDFLAGS = $(PLUGIN_FLAGS)
++acct_gather_interconnect_sysfs_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/acct_gather_profile/influxdb/Makefile.am	2026-04-10 13:14:15.791462785 +0200
++++ b/src/plugins/acct_gather_profile/influxdb/Makefile.am	2026-04-10 13:14:15.793000228 +0200
+@@ -9,5 +9,5 @@
+ pkglib_LTLIBRARIES = acct_gather_profile_influxdb.la
+ 
+ acct_gather_profile_influxdb_la_SOURCES = acct_gather_profile_influxdb.c
+-acct_gather_profile_influxdb_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS)
++acct_gather_profile_influxdb_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ acct_gather_profile_influxdb_la_LIBADD = $(LIBCURL)
+--- a/b/src/plugins/auth/jwt/Makefile.am	2026-04-10 13:14:15.794433371 +0200
++++ b/src/plugins/auth/jwt/Makefile.am	2026-04-10 13:14:15.795961484 +0200
+@@ -10,5 +10,5 @@
+ 
+ # JWT authentication plugin.
+ auth_jwt_la_SOURCES = auth_jwt.c auth_jwt.h pem_key.c
+-auth_jwt_la_LDFLAGS = $(PLUGIN_FLAGS) $(JWT_LDFLAGS)
++auth_jwt_la_LDFLAGS = $(PLUGIN_FLAGS) $(JWT_LDFLAGS) -Wl,--allow-shlib-undefined
+ auth_jwt_la_LIBADD = $(JWT_LIBS)
+--- a/b/src/plugins/auth/munge/Makefile.am	2026-04-10 13:14:15.795961484 +0200
++++ b/src/plugins/auth/munge/Makefile.am	2026-04-10 13:14:15.797468626 +0200
+@@ -15,5 +15,5 @@
+ 
+ # Munge authentication plugin
+ auth_munge_la_SOURCES = auth_munge.c
+-auth_munge_la_LDFLAGS = $(PLUGIN_FLAGS) $(MUNGE_LDFLAGS)
++auth_munge_la_LDFLAGS = $(PLUGIN_FLAGS) $(MUNGE_LDFLAGS) -Wl,--allow-shlib-undefined
+ auth_munge_la_LIBADD =  $(MUNGE_LIBS)
+--- a/b/src/plugins/auth/none/Makefile.am	2026-04-10 13:14:15.797468626 +0200
++++ b/src/plugins/auth/none/Makefile.am	2026-04-10 13:14:15.798971286 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Null authentication plugin.
+ auth_none_la_SOURCES = auth_none.c
+-auth_none_la_LDFLAGS = $(PLUGIN_FLAGS)
++auth_none_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/auth/slurm/Makefile.am	2026-04-10 13:14:15.798971286 +0200
++++ b/src/plugins/auth/slurm/Makefile.am	2026-04-10 13:14:15.800496929 +0200
+@@ -19,7 +19,7 @@
+ 	sack.c \
+ 	sbcast.c \
+ 	util.c
+-auth_slurm_la_LDFLAGS = $(PLUGIN_FLAGS) $(JWT_LDFLAGS)
++auth_slurm_la_LDFLAGS = $(PLUGIN_FLAGS) $(JWT_LDFLAGS) -Wl,--allow-shlib-undefined
+ auth_slurm_la_LIBADD = $(top_builddir)/src/plugins/cred/common/libcred_common.la $(JWT_LIBS)
+ 
+ force:
+--- a/b/src/plugins/burst_buffer/datawarp/Makefile.am	2026-04-10 13:14:15.803487381 +0200
++++ b/src/plugins/burst_buffer/datawarp/Makefile.am	2026-04-10 13:14:15.804977570 +0200
+@@ -8,7 +8,7 @@
+ 
+ pkglib_LTLIBRARIES = burst_buffer_datawarp.la
+ burst_buffer_datawarp_la_SOURCES = burst_buffer_datawarp.c
+-burst_buffer_datawarp_la_LDFLAGS = $(PLUGIN_FLAGS) $(DATAWARP_LDFLAGS) $(JSON_LDFLAGS)
++burst_buffer_datawarp_la_LDFLAGS = $(PLUGIN_FLAGS) $(DATAWARP_LDFLAGS) $(JSON_LDFLAGS) -Wl,--allow-shlib-undefined
+ burst_buffer_datawarp_la_LIBADD = ../common/libburst_buffer_common.la
+ 
+ force:
+--- a/b/src/plugins/burst_buffer/lua/Makefile.am	2026-04-10 13:14:15.804977570 +0200
++++ b/src/plugins/burst_buffer/lua/Makefile.am	2026-04-10 13:14:15.806465386 +0200
+@@ -12,7 +12,7 @@
+ # Burst buffer lua plugin.
+ pkglib_LTLIBRARIES = burst_buffer_lua.la
+ burst_buffer_lua_la_SOURCES = burst_buffer_lua.c
+-burst_buffer_lua_la_LDFLAGS = $(PLUGIN_FLAGS)
++burst_buffer_lua_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ burst_buffer_lua_la_LIBADD = ../common/libburst_buffer_common.la \
+ 			     $(top_builddir)/src/lua/libslurm_lua.la \
+ 			     $(lua_lIBS)
+--- a/b/src/plugins/cgroup/v1/Makefile.am	2026-04-10 13:14:15.809381599 +0200
++++ b/src/plugins/cgroup/v1/Makefile.am	2026-04-10 13:14:15.810928784 +0200
+@@ -10,5 +10,5 @@
+ 
+ # Cgroup v1 plugin.
+ cgroup_v1_la_SOURCES =	cgroup_v1.c cgroup_v1.h xcgroup.c xcgroup.h
+-cgroup_v1_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS)
++cgroup_v1_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ cgroup_v1_la_LIBADD = ../common/libcgroup_common.la
+--- a/b/src/plugins/cgroup/v2/Makefile.am	2026-04-10 13:14:15.810928784 +0200
++++ b/src/plugins/cgroup/v2/Makefile.am	2026-04-10 13:14:15.812432456 +0200
+@@ -16,5 +16,5 @@
+ 	cgroup_dbus.c	\
+ 	cgroup_dbus.h
+ 
+-cgroup_v2_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS)
++cgroup_v2_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ cgroup_v2_la_LIBADD = ../common/libcgroup_common.la $(dbus_LIBS)
+--- a/b/src/plugins/cli_filter/lua/Makefile.am	2026-04-10 13:14:15.815159685 +0200
++++ b/src/plugins/cli_filter/lua/Makefile.am	2026-04-10 13:14:15.816646951 +0200
+@@ -13,7 +13,7 @@
+ 
+ # cli_filter lua plugin.
+ cli_filter_lua_la_SOURCES = cli_filter_lua.c
+-cli_filter_lua_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS)
++cli_filter_lua_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ cli_filter_lua_la_LIBADD = ../common/libcli_filter_common.la \
+ 			   $(top_builddir)/src/lua/libslurm_lua.la \
+ 			   $(lua_LIBS)
+--- a/b/src/plugins/cli_filter/syslog/Makefile.am	2026-04-10 13:14:15.816646951 +0200
++++ b/src/plugins/cli_filter/syslog/Makefile.am	2026-04-10 13:14:15.818124643 +0200
+@@ -10,5 +10,5 @@
+ 
+ # Job submit defaults plugin.
+ cli_filter_syslog_la_SOURCES = cli_filter_syslog.c
+-cli_filter_syslog_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS)
++cli_filter_syslog_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ cli_filter_syslog_la_LIBADD = ../common/libcli_filter_common.la
+--- a/b/src/plugins/cli_filter/user_defaults/Makefile.am	2026-04-10 13:14:15.818124643 +0200
++++ b/src/plugins/cli_filter/user_defaults/Makefile.am	2026-04-10 13:14:15.819690087 +0200
+@@ -10,5 +10,5 @@
+ 
+ # Job submit defaults plugin.
+ cli_filter_user_defaults_la_SOURCES = cli_filter_user_defaults.c
+-cli_filter_user_defaults_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS)
++cli_filter_user_defaults_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ cli_filter_user_defaults_la_LIBADD = ../common/libcli_filter_common.la
+--- a/b/src/plugins/core_spec/cray_aries/Makefile.am	2026-04-10 13:14:15.821078834 +0200
++++ b/src/plugins/core_spec/cray_aries/Makefile.am	2026-04-10 13:14:15.822620822 +0200
+@@ -11,4 +11,4 @@
+ # Cray/Aries core specialization plugin.
+ core_spec_cray_aries_la_SOURCES = core_spec_cray_aries.c
+ core_spec_cray_aries_la_CPPFLAGS = $(CRAY_JOB_CPPFLAGS) $(AM_CPPFLAGS)
+-core_spec_cray_aries_la_LDFLAGS = $(CRAY_JOB_LDFLAGS) $(PLUGIN_FLAGS)
++core_spec_cray_aries_la_LDFLAGS = $(CRAY_JOB_LDFLAGS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/cred/munge/Makefile.am	2026-04-10 13:14:15.825252078 +0200
++++ b/src/plugins/cred/munge/Makefile.am	2026-04-10 13:14:15.826887966 +0200
+@@ -10,5 +10,5 @@
+ 
+ # Munge cred plugin
+ cred_munge_la_SOURCES = cred_munge.c
+-cred_munge_la_LDFLAGS = $(PLUGIN_FLAGS) $(MUNGE_LDFLAGS)
++cred_munge_la_LDFLAGS = $(PLUGIN_FLAGS) $(MUNGE_LDFLAGS) -Wl,--allow-shlib-undefined
+ cred_munge_la_LIBADD =  $(MUNGE_LIBS) ../common/libcred_common.la
+--- a/b/src/plugins/cred/none/Makefile.am	2026-04-10 13:14:15.826887966 +0200
++++ b/src/plugins/cred/none/Makefile.am	2026-04-10 13:14:15.828716403 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Null job credential plugin
+ cred_none_la_SOURCES = cred_none.c
+-cred_none_la_LDFLAGS = $(PLUGIN_FLAGS) ../common/libcred_common.la
++cred_none_la_LDFLAGS = $(PLUGIN_FLAGS) ../common/libcred_common.la -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/data_parser/v0.0.39/Makefile.am	2026-04-10 13:14:15.830580519 +0200
++++ b/src/plugins/data_parser/v0.0.39/Makefile.am	2026-04-10 13:14:15.832238681 +0200
+@@ -18,7 +18,7 @@
+ 	parsing.h parsing.c \
+ 	parsers.h parsers.c
+ data_parser_v0_0_39_la_DEPENDENCIES =
+-data_parser_v0_0_39_la_LDFLAGS = $(PLUGIN_FLAGS)
++data_parser_v0_0_39_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ data_parser_v0_0_39_la_LIBADD =
+ data_parser_v0_0_39_la_CFLAGS = -DDATA_VERSION=v0.0.39 -DPLUGIN_ID=12001
+ 
+--- a/b/src/plugins/data_parser/v0.0.40/Makefile.am	2026-04-10 13:14:15.832238681 +0200
++++ b/src/plugins/data_parser/v0.0.40/Makefile.am	2026-04-10 13:14:15.833662657 +0200
+@@ -18,7 +18,7 @@
+ 	parsing.h parsing.c \
+ 	parsers.h parsers.c
+ data_parser_v0_0_40_la_DEPENDENCIES =
+-data_parser_v0_0_40_la_LDFLAGS = $(PLUGIN_FLAGS)
++data_parser_v0_0_40_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ data_parser_v0_0_40_la_LIBADD =
+ data_parser_v0_0_40_la_CFLAGS = -DDATA_VERSION=v0.0.40 -DPLUGIN_ID=12002
+ 
+--- a/b/src/plugins/ext_sensors/rrd/Makefile.am	2026-04-10 13:14:15.835117768 +0200
++++ b/src/plugins/ext_sensors/rrd/Makefile.am	2026-04-10 13:14:15.836694557 +0200
+@@ -13,7 +13,7 @@
+ ext_sensors_rrd_la_SOURCES = ext_sensors_rrd.c \
+ 	ext_sensors_rrd.h
+ 
+-ext_sensors_rrd_la_LDFLAGS = $(PLUGIN_FLAGS) $(RRDTOOL_LDFLAGS)
++ext_sensors_rrd_la_LDFLAGS = $(PLUGIN_FLAGS) $(RRDTOOL_LDFLAGS) -Wl,--allow-shlib-undefined
+ ext_sensors_rrd_la_LIBADD = $(RRDTOOL_LIBS)
+ 
+ else
+--- a/b/src/plugins/gpu/generic/Makefile.am	2026-04-10 13:14:15.839560950 +0200
++++ b/src/plugins/gpu/generic/Makefile.am	2026-04-10 13:14:15.841144393 +0200
+@@ -10,7 +10,7 @@
+ 
+ # GPU GENERIC plugin.
+ gpu_generic_la_SOURCES = gpu_generic.c
+-gpu_generic_la_LDFLAGS = $(PLUGIN_FLAGS)
++gpu_generic_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ force:
+ $(gpu_generic_la_LIBADD) : force
+--- a/b/src/plugins/gpu/nrt/Makefile.am	2026-04-10 13:14:15.841144393 +0200
++++ b/src/plugins/gpu/nrt/Makefile.am	2026-04-10 13:14:15.842743444 +0200
+@@ -10,4 +10,4 @@
+ 
+ pkglib_LTLIBRARIES = gpu_nrt.la
+ gpu_nrt_la_SOURCES = $(NRT_SOURCES)
+-gpu_nrt_la_LDFLAGS = $(PLUGIN_FLAGS)
++gpu_nrt_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/gpu/nvml/Makefile.am	2026-04-10 13:14:15.842743444 +0200
++++ b/src/plugins/gpu/nvml/Makefile.am	2026-04-10 13:14:15.844311200 +0200
+@@ -10,5 +10,5 @@
+ 
+ pkglib_LTLIBRARIES = gpu_nvml.la
+ gpu_nvml_la_SOURCES = $(NVML_SOURCES)
+-gpu_nvml_la_LDFLAGS = $(PLUGIN_FLAGS)
++gpu_nvml_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ gpu_nvml_la_LIBADD = ../common/libgpu_common.la
+--- a/b/src/plugins/gpu/oneapi/Makefile.am	2026-04-10 13:14:15.844311200 +0200
++++ b/src/plugins/gpu/oneapi/Makefile.am	2026-04-10 13:14:15.845898106 +0200
+@@ -10,5 +10,5 @@
+ 
+ pkglib_LTLIBRARIES = gpu_oneapi.la
+ gpu_oneapi_la_SOURCES = $(ONEAPI_SOURCES)
+-gpu_oneapi_la_LDFLAGS = $(PLUGIN_FLAGS)
++gpu_oneapi_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ gpu_oneapi_la_LIBADD = ../common/libgpu_common.la
+--- a/b/src/plugins/gpu/rsmi/Makefile.am	2026-04-10 13:14:15.845898106 +0200
++++ b/src/plugins/gpu/rsmi/Makefile.am	2026-04-10 13:14:15.847539164 +0200
+@@ -10,5 +10,5 @@
+ 
+ pkglib_LTLIBRARIES = gpu_rsmi.la
+ gpu_rsmi_la_SOURCES = $(RSMI_SOURCES)
+-gpu_rsmi_la_LDFLAGS = $(NUMA_LIBS) $(PLUGIN_FLAGS)
++gpu_rsmi_la_LDFLAGS = $(NUMA_LIBS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ gpu_rsmi_la_LIBADD = ../common/libgpu_common.la
+--- a/b/src/plugins/gres/gpu/Makefile.am	2026-04-10 13:14:15.850466110 +0200
++++ b/src/plugins/gres/gpu/Makefile.am	2026-04-10 13:14:15.852062382 +0200
+@@ -10,7 +10,7 @@
+ 
+ # Gres GPU plugin.
+ gres_gpu_la_SOURCES = gres_gpu.c
+-gres_gpu_la_LDFLAGS = $(PLUGIN_FLAGS)
++gres_gpu_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ gres_gpu_la_LIBADD = ../common/libgres_common.la
+ 
+ force:
+--- a/b/src/plugins/gres/mps/Makefile.am	2026-04-10 13:14:15.852062382 +0200
++++ b/src/plugins/gres/mps/Makefile.am	2026-04-10 13:14:15.853589904 +0200
+@@ -10,7 +10,7 @@
+ 
+ # Gres MPS plugin.
+ gres_mps_la_SOURCES = gres_mps.c
+-gres_mps_la_LDFLAGS = $(PLUGIN_FLAGS)
++gres_mps_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ gres_mps_la_LIBADD = ../common/libgres_common.la
+ 
+ force:
+--- a/b/src/plugins/gres/nic/Makefile.am	2026-04-10 13:14:15.853589904 +0200
++++ b/src/plugins/gres/nic/Makefile.am	2026-04-10 13:14:15.855200327 +0200
+@@ -10,7 +10,7 @@
+ 
+ # Gres NIC plugin.
+ gres_nic_la_SOURCES = gres_nic.c
+-gres_nic_la_LDFLAGS = $(PLUGIN_FLAGS)
++gres_nic_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ gres_nic_la_LIBADD = ../common/libgres_common.la
+ 
+ force:
+--- a/b/src/plugins/gres/shard/Makefile.am	2026-04-10 13:14:15.855200327 +0200
++++ b/src/plugins/gres/shard/Makefile.am	2026-04-10 13:14:15.856782586 +0200
+@@ -10,7 +10,7 @@
+ 
+ # Gres SHARD plugin.
+ gres_shard_la_SOURCES = gres_shard.c
+-gres_shard_la_LDFLAGS = $(PLUGIN_FLAGS)
++gres_shard_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ gres_shard_la_LIBADD = ../common/libgres_common.la
+ 
+ force:
+--- a/b/src/plugins/hash/k12/Makefile.am	2026-04-10 13:14:15.858150309 +0200
++++ b/src/plugins/hash/k12/Makefile.am	2026-04-10 13:14:15.859665536 +0200
+@@ -27,7 +27,7 @@
+ 	Phases.h			\
+ 	SnP-Relaned.h
+ 
+-hash_k12_la_LDFLAGS = $(PLUGIN_FLAGS)
++hash_k12_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ force:
+ $(hash_k12_la_LIBADD) : force
+--- a/b/src/plugins/job_container/cncu/Makefile.am	2026-04-10 13:14:15.861079747 +0200
++++ b/src/plugins/job_container/cncu/Makefile.am	2026-04-10 13:14:15.862641332 +0200
+@@ -10,6 +10,6 @@
+ 
+ # job_container/cncu plugin.
+ job_container_cncu_la_SOURCES = job_container_cncu.c
+-job_container_cncu_la_LDFLAGS = $(PLUGIN_FLAGS) \
++job_container_cncu_la_LDFLAGS = $(PLUGIN_FLAGS) \ -Wl,--allow-shlib-undefined
+ 	$(CRAY_JOB_LDFLAGS)
+ 
+--- a/b/src/plugins/job_container/tmpfs/Makefile.am	2026-04-10 13:14:15.862641332 +0200
++++ b/src/plugins/job_container/tmpfs/Makefile.am	2026-04-10 13:14:15.864258674 +0200
+@@ -11,4 +11,4 @@
+ # job_container/none plugin.
+ job_container_tmpfs_la_SOURCES = job_container_tmpfs.c read_jcconf.c \
+ 				 read_jcconf.h
+-job_container_tmpfs_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_container_tmpfs_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/job_submit/all_partitions/Makefile.am	2026-04-10 13:14:15.865730040 +0200
++++ b/src/plugins/job_submit/all_partitions/Makefile.am	2026-04-10 13:14:15.867594121 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Job submit all_partitions plugin.
+ job_submit_all_partitions_la_SOURCES = job_submit_all_partitions.c
+-job_submit_all_partitions_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_all_partitions_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/job_submit/cray_aries/Makefile.am	2026-04-10 13:14:15.867594121 +0200
++++ b/src/plugins/job_submit/cray_aries/Makefile.am	2026-04-10 13:14:15.869146912 +0200
+@@ -8,5 +8,5 @@
+ 
+ pkglib_LTLIBRARIES = job_submit_cray_aries.la
+ job_submit_cray_aries_la_SOURCES = job_submit_cray_aries.c
+-job_submit_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+--- a/b/src/plugins/job_submit/defaults/Makefile.am	2026-04-10 13:14:15.869146912 +0200
++++ b/src/plugins/job_submit/defaults/Makefile.am	2026-04-10 13:14:15.870730635 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Job submit defaults plugin.
+ job_submit_defaults_la_SOURCES = job_submit_defaults.c
+-job_submit_defaults_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_defaults_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/job_submit/logging/Makefile.am	2026-04-10 13:14:15.870730635 +0200
++++ b/src/plugins/job_submit/logging/Makefile.am	2026-04-10 13:14:15.872291696 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Job submit logging plugin.
+ job_submit_logging_la_SOURCES = job_submit_logging.c
+-job_submit_logging_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_logging_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/job_submit/lua/Makefile.am	2026-04-10 13:14:15.872291696 +0200
++++ b/src/plugins/job_submit/lua/Makefile.am	2026-04-10 13:14:15.873890611 +0200
+@@ -11,7 +11,7 @@
+ # Job submit lua plugin.
+ pkglib_LTLIBRARIES = job_submit_lua.la
+ job_submit_lua_la_SOURCES = job_submit_lua.c
+-job_submit_lua_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_lua_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ job_submit_lua_la_LIBADD  = $(top_builddir)/src/lua/libslurm_lua.la \
+ 			    $(lua_LIBS)
+ 
+--- a/b/src/plugins/job_submit/partition/Makefile.am	2026-04-10 13:14:15.873890611 +0200
++++ b/src/plugins/job_submit/partition/Makefile.am	2026-04-10 13:14:15.875497871 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Job submit partition plugin.
+ job_submit_partition_la_SOURCES = job_submit_partition.c
+-job_submit_partition_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_partition_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/job_submit/pbs/Makefile.am	2026-04-10 13:14:15.875497871 +0200
++++ b/src/plugins/job_submit/pbs/Makefile.am	2026-04-10 13:14:15.876968083 +0200
+@@ -9,8 +9,8 @@
+ # Job submit PBS plugin.
+ pkglib_LTLIBRARIES = job_submit_pbs.la spank_pbs.la
+ job_submit_pbs_la_SOURCES = job_submit_pbs.c
+-job_submit_pbs_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_pbs_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ # SPANK PBS plugin.
+ spank_pbs_la_SOURCES = spank_pbs.c
+-spank_pbs_la_LDFLAGS = $(PLUGIN_FLAGS)
++spank_pbs_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/job_submit/require_timelimit/Makefile.am	2026-04-10 13:14:15.876968083 +0200
++++ b/src/plugins/job_submit/require_timelimit/Makefile.am	2026-04-10 13:14:15.878544620 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Job submit require_timelimit plugin.
+ job_submit_require_timelimit_la_SOURCES = job_submit_require_timelimit.c
+-job_submit_require_timelimit_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_require_timelimit_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/job_submit/throttle/Makefile.am	2026-04-10 13:14:15.878544620 +0200
++++ b/src/plugins/job_submit/throttle/Makefile.am	2026-04-10 13:14:15.880124227 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Job submit throttle plugin.
+ job_submit_throttle_la_SOURCES = job_submit_throttle.c
+-job_submit_throttle_la_LDFLAGS = $(PLUGIN_FLAGS)
++job_submit_throttle_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/jobacct_gather/cgroup/Makefile.am	2026-04-10 13:14:15.881466573 +0200
++++ b/src/plugins/jobacct_gather/cgroup/Makefile.am	2026-04-10 13:14:15.882966412 +0200
+@@ -12,7 +12,7 @@
+ jobacct_gather_cgroup_la_SOURCES = jobacct_gather_cgroup.c \
+                                    jobacct_gather_cgroup.h
+ 
+-jobacct_gather_cgroup_la_LDFLAGS = $(PLUGIN_FLAGS)
++jobacct_gather_cgroup_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ jobacct_gather_cgroup_la_LIBADD = ../common/libjobacct_gather_common.la
+ 
+--- a/b/src/plugins/jobacct_gather/linux/Makefile.am	2026-04-10 13:14:15.884420057 +0200
++++ b/src/plugins/jobacct_gather/linux/Makefile.am	2026-04-10 13:14:15.885927010 +0200
+@@ -11,7 +11,7 @@
+ # Null job completion logging plugin.
+ jobacct_gather_linux_la_SOURCES = jobacct_gather_linux.c
+ 
+-jobacct_gather_linux_la_LDFLAGS = $(PLUGIN_FLAGS)
++jobacct_gather_linux_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ jobacct_gather_linux_la_LIBADD = ../common/libjobacct_gather_common.la
+ 
+--- a/b/src/plugins/jobcomp/elasticsearch/Makefile.am	2026-04-10 13:14:15.888696626 +0200
++++ b/src/plugins/jobcomp/elasticsearch/Makefile.am	2026-04-10 13:14:15.890200891 +0200
+@@ -12,7 +12,7 @@
+ pkglib_LTLIBRARIES = jobcomp_elasticsearch.la
+ 
+ jobcomp_elasticsearch_la_SOURCES = $(AS_ELASTICSEARCH_SOURCES)
+-jobcomp_elasticsearch_la_LDFLAGS = $(PLUGIN_FLAGS)
++jobcomp_elasticsearch_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ jobcomp_elasticsearch_la_LIBADD = $(LIBCURL) ../common/libjobcomp_common.la
+ 
+ else
+--- a/b/src/plugins/jobcomp/filetxt/Makefile.am	2026-04-10 13:14:15.890200891 +0200
++++ b/src/plugins/jobcomp/filetxt/Makefile.am	2026-04-10 13:14:15.891715133 +0200
+@@ -12,4 +12,4 @@
+ jobcomp_filetxt_la_SOURCES = jobcomp_filetxt.c \
+ 			filetxt_jobcomp_process.c filetxt_jobcomp_process.h
+ 
+-jobcomp_filetxt_la_LDFLAGS = $(PLUGIN_FLAGS)
++jobcomp_filetxt_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/jobcomp/kafka/Makefile.am	2026-04-10 13:14:15.891715133 +0200
++++ b/src/plugins/jobcomp/kafka/Makefile.am	2026-04-10 13:14:15.893231490 +0200
+@@ -13,7 +13,7 @@
+ jobcomp_kafka_la_SOURCES = jobcomp_kafka.c \
+ 			jobcomp_kafka_conf.c jobcomp_kafka_conf.h \
+ 			jobcomp_kafka_message.c jobcomp_kafka_message.h
+-jobcomp_kafka_la_LDFLAGS = $(PLUGIN_FLAGS) $(RDKAFKA_LDFLAGS)
++jobcomp_kafka_la_LDFLAGS = $(PLUGIN_FLAGS) $(RDKAFKA_LDFLAGS) -Wl,--allow-shlib-undefined
+ jobcomp_kafka_la_LIBADD = $(RDKAFKA_LIBS) ../common/libjobcomp_common.la
+ 
+ force:
+--- a/b/src/plugins/jobcomp/lua/Makefile.am	2026-04-10 13:14:15.893231490 +0200
++++ b/src/plugins/jobcomp/lua/Makefile.am	2026-04-10 13:14:15.894769686 +0200
+@@ -13,7 +13,7 @@
+ 
+ # cli_filter lua plugin.
+ jobcomp_lua_la_SOURCES = jobcomp_lua.c
+-jobcomp_lua_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS)
++jobcomp_lua_la_LDFLAGS = $(SO_LDFLAGS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ jobcomp_lua_la_LIBADD  = $(top_builddir)/src/lua/libslurm_lua.la \
+ 			 $(lua_LIBS)
+ 
+--- a/b/src/plugins/jobcomp/mysql/Makefile.am	2026-04-10 13:14:15.894769686 +0200
++++ b/src/plugins/jobcomp/mysql/Makefile.am	2026-04-10 13:14:15.896291893 +0200
+@@ -12,7 +12,7 @@
+ # Mysql storage plugin.
+ jobcomp_mysql_la_SOURCES = jobcomp_mysql.c \
+ 			mysql_jobcomp_process.c mysql_jobcomp_process.h
+-jobcomp_mysql_la_LDFLAGS = $(PLUGIN_FLAGS)
++jobcomp_mysql_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ jobcomp_mysql_la_CFLAGS = $(MYSQL_CFLAGS)
+ jobcomp_mysql_la_LIBADD  = $(top_builddir)/src/database/libslurm_mysql.la \
+ 	$(MYSQL_LIBS)
+--- a/b/src/plugins/jobcomp/script/Makefile.am	2026-04-10 13:14:15.896291893 +0200
++++ b/src/plugins/jobcomp/script/Makefile.am	2026-04-10 13:14:15.898314804 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Text file job completion logging plugin.
+ jobcomp_script_la_SOURCES = jobcomp_script.c
+-jobcomp_script_la_LDFLAGS = $(PLUGIN_FLAGS)
++jobcomp_script_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/mcs/account/Makefile.am	2026-04-10 13:14:15.899721680 +0200
++++ b/src/plugins/mcs/account/Makefile.am	2026-04-10 13:14:15.901242711 +0200
+@@ -10,4 +10,4 @@
+ 
+ # mcs/account plugin.
+ mcs_account_la_SOURCES = mcs_account.c
+-mcs_account_la_LDFLAGS = $(PLUGIN_FLAGS)
++mcs_account_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/mcs/group/Makefile.am	2026-04-10 13:14:15.901242711 +0200
++++ b/src/plugins/mcs/group/Makefile.am	2026-04-10 13:14:15.902737205 +0200
+@@ -10,4 +10,4 @@
+ 
+ # mcs/group plugin.
+ mcs_group_la_SOURCES = mcs_group.c
+-mcs_group_la_LDFLAGS = $(PLUGIN_FLAGS)
++mcs_group_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/mcs/user/Makefile.am	2026-04-10 13:14:15.902737205 +0200
++++ b/src/plugins/mcs/user/Makefile.am	2026-04-10 13:14:15.904217922 +0200
+@@ -10,4 +10,4 @@
+ 
+ # mcs/user plugin.
+ mcs_user_la_SOURCES = mcs_user.c
+-mcs_user_la_LDFLAGS = $(PLUGIN_FLAGS)
++mcs_user_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/mpi/cray_shasta/Makefile.am	2026-04-10 13:14:15.905581641 +0200
++++ b/src/plugins/mpi/cray_shasta/Makefile.am	2026-04-10 13:14:15.907025049 +0200
+@@ -11,4 +11,4 @@
+ # Cray Shasta MPI plugin
+ mpi_cray_shasta_la_SOURCES = apinfo.c apinfo.h mpi_cray_shasta.c
+ mpi_cray_shasta_la_CFLAGS = $(AM_CFLAGS)
+-mpi_cray_shasta_la_LDFLAGS = $(PLUGIN_FLAGS)
++mpi_cray_shasta_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/mpi/pmi2/Makefile.am	2026-04-10 13:14:15.907025049 +0200
++++ b/src/plugins/mpi/pmi2/Makefile.am	2026-04-10 13:14:15.908482319 +0200
+@@ -20,4 +20,4 @@
+ 	nameserv.c nameserv.h \
+ 	ring.c ring.h
+ 
+-mpi_pmi2_la_LDFLAGS = $(PLUGIN_FLAGS)
++mpi_pmi2_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/node_features/helpers/Makefile.am	2026-04-10 13:14:15.911285408 +0200
++++ b/src/plugins/node_features/helpers/Makefile.am	2026-04-10 13:14:15.912774649 +0200
+@@ -8,7 +8,7 @@
+ 
+ pkglib_LTLIBRARIES = node_features_helpers.la
+ node_features_helpers_la_SOURCES = node_features_helpers.c
+-node_features_helpers_la_LDFLAGS = $(PLUGIN_FLAGS)
++node_features_helpers_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ force:
+ $(node_features_helpers_la_LIBADD) : force
+--- a/b/src/plugins/node_features/knl_cray/Makefile.am	2026-04-10 13:14:15.912774649 +0200
++++ b/src/plugins/node_features/knl_cray/Makefile.am	2026-04-10 13:14:15.914265422 +0200
+@@ -10,7 +10,7 @@
+ 
+ pkglib_LTLIBRARIES = node_features_knl_cray.la
+ node_features_knl_cray_la_SOURCES = node_features_knl_cray.c
+-node_features_knl_cray_la_LDFLAGS = $(PLUGIN_FLAGS) $(DATAWARP_LDFLAGS) $(JSON_LDFLAGS)
++node_features_knl_cray_la_LDFLAGS = $(PLUGIN_FLAGS) $(DATAWARP_LDFLAGS) $(JSON_LDFLAGS) -Wl,--allow-shlib-undefined
+ 
+ force:
+ $(node_features_knl_cray_la_LIBADD) : force
+--- a/b/src/plugins/node_features/knl_generic/Makefile.am	2026-04-10 13:14:15.914265422 +0200
++++ b/src/plugins/node_features/knl_generic/Makefile.am	2026-04-10 13:14:15.915754112 +0200
+@@ -8,7 +8,7 @@
+ 
+ pkglib_LTLIBRARIES = node_features_knl_generic.la
+ node_features_knl_generic_la_SOURCES = node_features_knl_generic.c
+-node_features_knl_generic_la_LDFLAGS = $(PLUGIN_FLAGS)
++node_features_knl_generic_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ force:
+ $(node_features_knl_generic_la_LIBADD) : force
+--- a/b/src/plugins/power/cray_aries/Makefile.am	2026-04-10 13:14:15.918895853 +0200
++++ b/src/plugins/power/cray_aries/Makefile.am	2026-04-10 13:14:15.920423308 +0200
+@@ -10,7 +10,7 @@
+ 
+ pkglib_LTLIBRARIES = power_cray_aries.la
+ power_cray_aries_la_SOURCES = power_cray_aries.c
+-power_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) $(JSON_LDFLAGS)
++power_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) $(JSON_LDFLAGS) -Wl,--allow-shlib-undefined
+ power_cray_aries_la_LIBADD = ../common/libpower_common.la
+ 
+ force:
+--- a/b/src/plugins/preempt/partition_prio/Makefile.am	2026-04-10 13:14:15.921839374 +0200
++++ b/src/plugins/preempt/partition_prio/Makefile.am	2026-04-10 13:14:15.923384952 +0200
+@@ -10,5 +10,5 @@
+ 
+ preempt_partition_prio_la_SOURCES = preempt_partition_prio.c
+ 
+-preempt_partition_prio_la_LDFLAGS = $(PLUGIN_FLAGS)
++preempt_partition_prio_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+--- a/b/src/plugins/preempt/qos/Makefile.am	2026-04-10 13:14:15.923384952 +0200
++++ b/src/plugins/preempt/qos/Makefile.am	2026-04-10 13:14:15.924949257 +0200
+@@ -10,5 +10,5 @@
+ 
+ preempt_qos_la_SOURCES = preempt_qos.c
+ 
+-preempt_qos_la_LDFLAGS = $(PLUGIN_FLAGS)
++preempt_qos_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+--- a/b/src/plugins/prep/script/Makefile.am	2026-04-10 13:14:15.926397959 +0200
++++ b/src/plugins/prep/script/Makefile.am	2026-04-10 13:14:15.928205756 +0200
+@@ -15,4 +15,4 @@
+ 	prep_script_slurmctld.c		\
+ 	prep_script_slurmd.c
+ 
+-prep_script_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
++prep_script_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/priority/basic/Makefile.am	2026-04-10 13:14:15.929679895 +0200
++++ b/src/plugins/priority/basic/Makefile.am	2026-04-10 13:14:15.931161953 +0200
+@@ -10,4 +10,4 @@
+ 
+ # basic priority logging plugin.
+ priority_basic_la_SOURCES = priority_basic.c
+-priority_basic_la_LDFLAGS = $(PLUGIN_FLAGS)
++priority_basic_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/priority/multifactor/Makefile.am	2026-04-10 13:14:15.931161953 +0200
++++ b/src/plugins/priority/multifactor/Makefile.am	2026-04-10 13:14:15.932671438 +0200
+@@ -10,4 +10,4 @@
+ 
+ priority_multifactor_la_SOURCES = priority_multifactor.c fair_tree.c fair_tree.h priority_multifactor.h
+ 
+-priority_multifactor_la_LDFLAGS = $(PLUGIN_FLAGS)
++priority_multifactor_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/proctrack/cgroup/Makefile.am	2026-04-10 13:14:15.934075479 +0200
++++ b/src/plugins/proctrack/cgroup/Makefile.am	2026-04-10 13:14:15.935557029 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Process group ID process tracking plugin.
+ proctrack_cgroup_la_SOURCES = proctrack_cgroup.c
+-proctrack_cgroup_la_LDFLAGS = $(PLUGIN_FLAGS)
++proctrack_cgroup_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/proctrack/cray_aries/Makefile.am	2026-04-10 13:14:15.935557029 +0200
++++ b/src/plugins/proctrack/cray_aries/Makefile.am	2026-04-10 13:14:15.937070879 +0200
+@@ -9,4 +9,4 @@
+ pkglib_LTLIBRARIES = proctrack_cray_aries.la
+ 
+ proctrack_cray_aries_la_SOURCES = proctrack_cray_aries.c
+-proctrack_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) $(CRAY_JOB_LDFLAGS)
++proctrack_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) $(CRAY_JOB_LDFLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/proctrack/linuxproc/Makefile.am	2026-04-10 13:14:15.937070879 +0200
++++ b/src/plugins/proctrack/linuxproc/Makefile.am	2026-04-10 13:14:15.938573068 +0200
+@@ -13,4 +13,4 @@
+ 	proctrack_linuxproc.c \
+ 	kill_tree.c \
+ 	kill_tree.h
+-proctrack_linuxproc_la_LDFLAGS = $(PLUGIN_FLAGS)
++proctrack_linuxproc_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/proctrack/pgid/Makefile.am	2026-04-10 13:14:15.938573068 +0200
++++ b/src/plugins/proctrack/pgid/Makefile.am	2026-04-10 13:14:15.940517766 +0200
+@@ -10,4 +10,4 @@
+ 
+ # Process group ID process tracking  plugin.
+ proctrack_pgid_la_SOURCES = proctrack_pgid.c
+-proctrack_pgid_la_LDFLAGS = $(PLUGIN_FLAGS)
++proctrack_pgid_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/sched/backfill/Makefile.am	2026-04-10 13:14:15.941895946 +0200
++++ b/src/plugins/sched/backfill/Makefile.am	2026-04-10 13:14:15.943416598 +0200
+@@ -13,4 +13,4 @@
+ sched_backfill_la_SOURCES = backfill_wrapper.c	\
+ 			backfill.c	\
+ 			backfill.h
+-sched_backfill_la_LDFLAGS = $(PLUGIN_FLAGS)
++sched_backfill_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/sched/builtin/Makefile.am	2026-04-10 13:14:15.943416598 +0200
++++ b/src/plugins/sched/builtin/Makefile.am	2026-04-10 13:14:15.944900168 +0200
+@@ -14,4 +14,4 @@
+ 			builtin_wrapper.c \
+ 			builtin.c	\
+ 			builtin.h
+-sched_builtin_la_LDFLAGS = $(PLUGIN_FLAGS)
++sched_builtin_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/select/cons_tres/Makefile.am	2026-04-10 13:14:15.946283075 +0200
++++ b/src/plugins/select/cons_tres/Makefile.am	2026-04-10 13:14:15.947786344 +0200
+@@ -20,4 +20,4 @@
+ 	node_data.c node_data.h \
+ 	part_data.c part_data.h \
+ 	select_cons_tres.c select_cons_tres.h
+-select_cons_tres_la_LDFLAGS = $(PLUGIN_FLAGS)
++select_cons_tres_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/select/cray_aries/Makefile.am	2026-04-10 13:14:15.947786344 +0200
++++ b/src/plugins/select/cray_aries/Makefile.am	2026-04-10 13:14:15.949315673 +0200
+@@ -11,5 +11,5 @@
+ 
+ # Cray/Aries node selection plugin.
+ select_cray_aries_la_SOURCES = ccm.c ccm.h select_cray_aries.c
+-select_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) $(CRAY_SELECT_LDFLAGS)
++select_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) $(CRAY_SELECT_LDFLAGS) -Wl,--allow-shlib-undefined
+ select_cray_aries_la_LIBADD  = ../other/libother_select.la
+--- a/b/src/plugins/select/linear/Makefile.am	2026-04-10 13:14:15.949315673 +0200
++++ b/src/plugins/select/linear/Makefile.am	2026-04-10 13:14:15.950948400 +0200
+@@ -10,5 +10,5 @@
+ 
+ # Linear node selection plugin.
+ select_linear_la_SOURCES = select_linear.c select_linear.h
+-select_linear_la_LDFLAGS = $(PLUGIN_FLAGS)
++select_linear_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+--- a/b/src/plugins/serializer/json/Makefile.am	2026-04-10 13:14:15.953603928 +0200
++++ b/src/plugins/serializer/json/Makefile.am	2026-04-10 13:14:15.955172840 +0200
+@@ -12,7 +12,7 @@
+ 
+ # Serializer JSON plugin.
+ serializer_json_la_SOURCES = serializer_json.c
+-serializer_json_la_LDFLAGS = $(PLUGIN_FLAGS)
++serializer_json_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ serializer_json_la_LIBADD = $(JSON_LDFLAGS)
+ 
+ force:
+--- a/b/src/plugins/serializer/url-encoded/Makefile.am	2026-04-10 13:14:15.955172840 +0200
++++ b/src/plugins/serializer/url-encoded/Makefile.am	2026-04-10 13:14:15.956678524 +0200
+@@ -10,7 +10,7 @@
+ 
+ # Serializer URL encoded plugin.
+ serializer_url_encoded_la_SOURCES = serializer_url_encoded.c
+-serializer_url_encoded_la_LDFLAGS = $(PLUGIN_FLAGS)
++serializer_url_encoded_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ force:
+ $(serializer_url_encoded_la_LIBADD) : force
+--- a/b/src/plugins/serializer/yaml/Makefile.am	2026-04-10 13:14:15.956678524 +0200
++++ b/src/plugins/serializer/yaml/Makefile.am	2026-04-10 13:14:15.958250275 +0200
+@@ -12,7 +12,7 @@
+ 
+ # Serializer yaml plugin.
+ serializer_yaml_la_SOURCES = serializer_yaml.c
+-serializer_yaml_la_LDFLAGS = $(PLUGIN_FLAGS)
++serializer_yaml_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ serializer_yaml_la_LIBADD = $(YAML_LDFLAGS)
+ 
+ force:
+--- a/b/src/plugins/site_factor/example/Makefile.am	2026-04-10 13:14:15.959606018 +0200
++++ b/src/plugins/site_factor/example/Makefile.am	2026-04-10 13:14:15.961384442 +0200
+@@ -10,7 +10,7 @@
+ 
+ # site_factor NONE plugin.
+ site_factor_example_la_SOURCES = site_factor_example.c
+-site_factor_example_la_LDFLAGS = $(PLUGIN_FLAGS)
++site_factor_example_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ 
+ force:
+ $(site_factor_example_la_LIBADD) : force
+--- a/b/src/plugins/switch/hpe_slingshot/Makefile.am	2026-04-10 13:14:15.964137388 +0200
++++ b/src/plugins/switch/hpe_slingshot/Makefile.am	2026-04-10 13:14:15.965717446 +0200
+@@ -23,7 +23,7 @@
+ 	setup_nic.c \
+ 	switch_hpe_slingshot.c \
+ 	switch_hpe_slingshot.h
+-switch_hpe_slingshot_la_LDFLAGS = $(PLUGIN_FLAGS)
++switch_hpe_slingshot_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ switch_hpe_slingshot_la_LIBADD = $(LIBCURL) $(JSON_LDFLAGS)
+ 
+ endif
+--- a/b/src/plugins/task/affinity/Makefile.am	2026-04-10 13:14:15.967097474 +0200
++++ b/src/plugins/task/affinity/Makefile.am	2026-04-10 13:14:15.968600074 +0200
+@@ -13,4 +13,4 @@
+ 	numa.c \
+ 	schedutils.c \
+ 	task_affinity.c
+-task_affinity_la_LDFLAGS = $(NUMA_LIBS) $(PLUGIN_FLAGS)
++task_affinity_la_LDFLAGS = $(NUMA_LIBS) $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/task/cgroup/Makefile.am	2026-04-10 13:14:15.968600074 +0200
++++ b/src/plugins/task/cgroup/Makefile.am	2026-04-10 13:14:15.970182093 +0200
+@@ -13,4 +13,4 @@
+ 				task_cgroup_cpuset.h task_cgroup_cpuset.c \
+ 				task_cgroup_memory.h task_cgroup_memory.c \
+ 				task_cgroup_devices.h task_cgroup_devices.c
+-task_cgroup_la_LDFLAGS = $(PLUGIN_FLAGS)
++task_cgroup_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+--- a/b/src/plugins/task/cray_aries/Makefile.am	2026-04-10 13:14:15.970182093 +0200
++++ b/src/plugins/task/cray_aries/Makefile.am	2026-04-10 13:14:15.971712956 +0200
+@@ -10,5 +10,5 @@
+ 
+ # Null task plugin.
+ task_cray_aries_la_SOURCES = task_cray_aries.c
+-task_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) $(CRAY_TASK_LDFLAGS) \
++task_cray_aries_la_LDFLAGS = $(PLUGIN_FLAGS) $(CRAY_TASK_LDFLAGS) \ -Wl,--allow-shlib-undefined
+ 	$(NUMA_LIBS)
+--- a/b/src/plugins/topology/3d_torus/Makefile.am	2026-04-10 13:14:15.971712956 +0200
++++ b/src/plugins/topology/3d_torus/Makefile.am	2026-04-10 13:14:15.973229132 +0200
+@@ -14,7 +14,7 @@
+ 	hilbert.h		\
+ 	hilbert_slurm.c		\
+ 	topology_3d_torus.c
+-topology_3d_torus_la_LDFLAGS = $(PLUGIN_FLAGS)
++topology_3d_torus_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ topology_3d_torus_la_LIBADD = ../common/libtopology_common.la
+ 
+ force:
+--- a/b/src/plugins/topology/block/Makefile.am	2026-04-10 13:14:15.974750286 +0200
++++ b/src/plugins/topology/block/Makefile.am	2026-04-10 13:14:15.976241405 +0200
+@@ -10,7 +10,7 @@
+ 
+ # Null topology plugin.
+ topology_block_la_SOURCES = topology_block.c
+-topology_block_la_LDFLAGS = $(PLUGIN_FLAGS)
++topology_block_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ topology_block_la_LIBADD = ../common/libtopology_common.la
+ 
+ force:
+--- a/b/src/plugins/topology/default/Makefile.am	2026-04-10 13:14:15.977647986 +0200
++++ b/src/plugins/topology/default/Makefile.am	2026-04-10 13:14:15.979144240 +0200
+@@ -10,7 +10,7 @@
+ 
+ # Null topology plugin.
+ topology_default_la_SOURCES = topology_default.c
+-topology_default_la_LDFLAGS = $(PLUGIN_FLAGS)
++topology_default_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ topology_default_la_LIBADD = ../common/libtopology_common.la
+ 
+ force:
+--- a/b/src/plugins/topology/tree/Makefile.am	2026-04-10 13:14:15.979144240 +0200
++++ b/src/plugins/topology/tree/Makefile.am	2026-04-10 13:14:15.980843283 +0200
+@@ -10,7 +10,7 @@
+ 
+ # tree topology plugin.
+ topology_tree_la_SOURCES = topology_tree.c
+-topology_tree_la_LDFLAGS = $(PLUGIN_FLAGS)
++topology_tree_la_LDFLAGS = $(PLUGIN_FLAGS) -Wl,--allow-shlib-undefined
+ topology_tree_la_LIBADD = ../common/libtopology_common.la
+ 
+ force:

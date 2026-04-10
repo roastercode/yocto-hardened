@@ -20,6 +20,10 @@ IMAGE_INSTALL = " \
     util-linux \
     procps \
     sudo \
+    iproute2 \
+    strace \
+    lsof \
+    nmap \
     ${CORE_IMAGE_EXTRA_INSTALL} \
 "
 IMAGE_ROOTFS_SIZE ?= "212992"

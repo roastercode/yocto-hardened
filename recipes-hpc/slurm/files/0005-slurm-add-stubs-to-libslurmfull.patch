@@ -1,0 +1,166 @@
+--- a/src/api/Makefile.in	2026-04-10 16:07:29.330279510 +0200
++++ slurm-23.11.7/src/api/Makefile.in	2026-04-10 16:07:29.338782315 +0200
+@@ -204,7 +204,7 @@
+ 	$(AM_CFLAGS) $(CFLAGS) $(libslurm_pmi_la_LDFLAGS) $(LDFLAGS) \
+ 	-o $@
+ libslurmfull_la_DEPENDENCIES = $(convenience_libs)
+-am_libslurmfull_la_OBJECTS =
++am_libslurmfull_la_OBJECTS = slurm_stubs.lo
+ libslurmfull_la_OBJECTS = $(am_libslurmfull_la_OBJECTS)
+ libslurmfull_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+ 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+@@ -736,7 +736,7 @@
+         -version-info $(current):$(rev):$(age) \
+         $(OTHER_FLAGS)
+ 
+-libslurmfull_la_SOURCES = 
++libslurmfull_la_SOURCES = slurm_stubs.c
+ libslurmfull_la_LIBADD = $(convenience_libs)
+ libslurmfull_la_LDFLAGS = \
+         $(LIB_LDFLAGS) \
+--- /dev/null
++++ b/src/api/slurm_stubs.c
+@@ -0,0 +1,143 @@
++/*
++ * Auto-generated stubs for slurmctld-internal symbols
++ * needed by Slurm plugins when loaded by client binaries.
++ * These are no-ops safe for read-only operations (sinfo, squeue, etc.)
++ */
++#include <stdint.h>
++#include <stdlib.h>
++
++typedef void* List;
++typedef void* job_record_t;
++typedef void* part_record_t;
++
++/* Global variables stubs */
++void *accounting_enforce = NULL;
++void *acct_db_conn = NULL;
++void *avail_front_end = NULL;
++void *avail_node_bitmap = NULL;
++void *bf_ignore_node_bitmap = NULL;
++void *cg_node_bitmap = NULL;
++void *conf = NULL;
++void *default_part_name = NULL;
++void *job_list = NULL;
++void *last_job_update = NULL;
++void *last_part_update = NULL;
++void *last_resv_update = NULL;
++void *part_list = NULL;
++void *resv_list = NULL;
++void *rs_node_bitmap = NULL;
++void *slurmctld_config = NULL;
++void *slurmctld_diag_stats = NULL;
++void *slurmctld_tres_cnt = NULL;
++void *up_node_bitmap = NULL;
++
++/* Function stubs */
++void acct_policy_add_job_submit() { return; }
++void acct_policy_alter_job() { return; }
++void acct_policy_get_prio_thresh() { return; }
++void acct_policy_job_begin() { return; }
++void acct_policy_job_fini() { return; }
++void acct_policy_job_runnable_post_select() { return; }
++void acct_policy_job_runnable_pre_select() { return; }
++void batch_requeue_fini() { return; }
++void bb_g_job_get_est_start() { return; }
++void bb_g_job_test_stage_in() { return; }
++void bb_g_job_try_stage_in() { return; }
++void bb_g_load_state() { return; }
++void bf_licenses_initial() { return; }
++void bf_licenses_to_string() { return; }
++void build_active_feature_bitmap() { return; }
++void build_array_str() { return; }
++void build_cg_bitmap() { return; }
++void build_job_queue() { return; }
++void calc_job_billable_tres() { return; }
++void check_bf_running_lock() { return; }
++void deadline_ok() { return; }
++void deallocate_nodes() { return; }
++void feature_list_delete() { return; }
++void fed_mgr_job_lock() { return; }
++void fed_mgr_job_start() { return; }
++void fed_mgr_job_unlock() { return; }
++void fed_mgr_sibs_synced() { return; }
++void fill_array_reasons() { return; }
++void filter_by_node_mcs() { return; }
++void filter_by_node_owner() { return; }
++void find_part_record() { return; }
++void find_resv_end() { return; }
++void get_job_env() { return; }
++void get_job_script() { return; }
++void get_next_job_id() { return; }
++void get_node_cnts() { return; }
++void get_procs() { return; }
++void gres_ctld_set_job_tres_cnt() { return; }
++void job_array_start_test() { return; }
++void job_completion_logger() { return; }
++void job_fail_qos() { return; }
++void job_get_sockets_per_node() { return; }
++void job_get_tres_mem() { return; }
++void job_independent() { return; }
++void job_is_completing() { return; }
++void job_limits_check() { return; }
++void job_queue_rec_magnetic_resv() { return; }
++void job_queue_rec_resv_list() { return; }
++void job_req_node_filter() { return; }
++void job_resv_clear_magnetic_flag() { return; }
++void job_state_set() { return; }
++void job_state_set_flag() { return; }
++void job_state_unset_flag() { return; }
++void job_test_bb_resv() { return; }
++void job_test_resv() { return; }
++void job_time_adj_resv() { return; }
++void launch_job() { return; }
++void license_job_test() { return; }
++void lock_slurmctld() { return; }
++void lock_state_files() { return; }
++void mail_job_info() { return; }
++void part_policy_valid_qos() { return; }
++void prolog_running_decr() { return; }
++void queue_job_scheduler() { return; }
++void reservation_delete_resv_exc_parts() { return; }
++void select_nodes() { return; }
++void send_jobs_to_accounting() { return; }
++void send_nodes_to_accounting() { return; }
++void send_resvs_to_accounting() { return; }
++void set_job_prio() { return; }
++void slurm_bf_licenses_avail() { return; }
++void slurm_bf_licenses_copy() { return; }
++void slurm_bf_licenses_deduct() { return; }
++void slurm_bf_licenses_equal() { return; }
++void slurm_bf_licenses_transfer() { return; }
++void slurm_find_preemptable_jobs() { return; }
++void sort_job_queue() { return; }
++void srun_allocate() { return; }
++void task_cpuset_to_str() { return; }
++void task_slurm_chkaffinity() { return; }
++void task_str_to_cpuset() { return; }
++void test_job_nodes_ready() { return; }
++void trigger_burst_buffer() { return; }
++void trigger_primary_ctld_acct_full() { return; }
++void trigger_primary_db_fail() { return; }
++void trigger_primary_db_res_op() { return; }
++void trigger_primary_dbd_fail() { return; }
++void trigger_primary_dbd_res_op() { return; }
++void ume_notify() { return; }
++void unlock_state_files() { return; }
++void update_job_dependency() { return; }
++void validate_operator() { return; }
++void validate_super_user() { return; }
++void unlock_slurmctld() { return; }
++
++/* Additional missing symbols */
++void *license_copy(void *l) { return NULL; }
++int license_job_return_to_list(void *j, void *l) { return 0; }
++int license_job_test_with_list(void *j, void *l, int r) { return 0; }
++void *find_job_record(uint32_t job_id) { return NULL; }
++int drain_nodes(char *n, char *r, uint32_t uid) { return 0; }
++int job_overlap_and_running(uint64_t s, uint64_t e, void *j) { return 0; }
++uint16_t slurm_job_preempt_mode(void *j) { return 0; }
++void gres_ctld_job_build_details(void *l, char *n, uint32_t c, char **s) { return; }
++int gres_ctld_job_alloc(void *jl, void **jla, void *nl, int nc, int ji, char *nn, int na) { return 0; }
++int gres_ctld_job_alloc_whole_node(void *jl, void **jla, void *nl, int nc, int ji, char *nn) { return 0; }
++int gres_ctld_job_dealloc(void *jl, void *nl, int nc, int ji, char *nn, int oj, int r) { return 0; }
++void gres_ctld_job_merge(void *fl, void *fn, void *tl, void *tn) { return; }
++int gres_ctld_set_node_tres_cnt(void *jl, void **tc, int nc, int lk) { return 0; }
