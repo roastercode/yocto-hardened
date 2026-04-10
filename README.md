@@ -2,12 +2,23 @@
 
 Hardened Yocto layer for studies — custom distro and image with progressive security hardening.
 
+Study project: from minimal image to a fully hardened OS, then a full HPC cluster.
+
 ## Layer: meta-custom
 
 Custom Yocto layer providing:
 - A hardened distro (`poky-hardened`)
 - A hardened image (`custom-image`)
 - Example recipe (`hello-custom`)
+
+## Branches
+
+| Branche | Description | Cible |
+|---------|-------------|-------|
+| `main` | Base minimale, point de départ | QEMU |
+| `ext4-dm-verity-selinux` | Image durcie : ext4 + dm-verity + SELinux enforcing | BeagleBone Black |
+| `squashfs-selinux-permissive` | Image squashfs + SELinux permissive | BeagleBone Black |
+| `yocto-hpc` | Mini-cluster HPC virtuel (5 VMs KVM) | QEMU/KVM |
 
 ## Hardening Status
 
@@ -19,8 +30,8 @@ Custom Yocto layer providing:
 | D4 | CVE checking (NVD database) | ✅ Done |
 | D5 | Custom hardened distro (`poky-hardened`) | ✅ Done |
 | D6 | SELinux enforcing (refpolicy-targeted) | ✅ Done |
-| D7 | dm-verity kernel support | ✅ Kernel built, bootloader integration pending |
-| D8 | dm-verity bootloader integration | 🔲 Todo |
+| D7 | dm-verity kernel support | ✅ Done |
+| D8 | dm-verity bootloader integration | 🔧 In progress |
 | D9 | IMA/EVM (runtime file integrity) | 🔲 Todo |
 | D10 | Secure Boot | 🔲 Todo |
 
@@ -33,6 +44,7 @@ meta-openembedded/meta-oe
 meta-openembedded/meta-python
 meta-selinux
 
+
 ### Setup
 
 ```bash
@@ -44,14 +56,20 @@ DISTRO = "poky-hardened"
 
 # Create credentials (never commit this file)
 cp recipes-core/images/credentials.inc.example recipes-core/images/credentials.inc
+
 # Edit credentials.inc with your hashed password
 # Generate hash: openssl passwd -6 "yourpassword"
+```
 
-Build
+### Build
 
+```bash
 source oe-init-build-env build-qemu-x86
 bitbake custom-image
+```
 
-Run in QEMU
+### Run in QEMU
 
+```bash
 runqemu nographic slirp custom-image-qemux86-64.qemuboot.conf
+```
