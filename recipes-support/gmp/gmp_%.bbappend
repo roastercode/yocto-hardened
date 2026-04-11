@@ -3,8 +3,11 @@ CFLAGS:append:class-native = " -std=gnu17 -Wno-error"
 BUILD_CFLAGS:append:class-native = " -std=gnu17"
 CFLAGS_FOR_BUILD:append:class-native = " -std=gnu17"
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
-
-do_patch:append:class-native() {
-    ${WORKDIR}/fix-cross-compile.sh ${S}/configure
+python do_patch:append:class-native() {
+    import subprocess, os
+    configure = os.path.join(d.getVar('S'), 'configure')
+    if os.path.exists(configure):
+        subprocess.run(['sed', '-i',
+            's/if test "$cross_compiling" = no; then/if false; then # Gentoo GCC15 compat/g',
+            configure], check=True)
 }
