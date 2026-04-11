@@ -43,9 +43,10 @@ do_install:append() {
     install -m 0755 ${WORKDIR}/munge.init ${D}${sysconfdir}/init.d/munge
 }
 
-FILES:${PN} += "${base_libdir}/sysusers.d  \
     /var/lib/munge \
     /etc/munge \
     ${sysconfdir}/init.d/munge \
     ${sysconfdir}/default \
     ${sysconfdir}/logrotate.d"
+
+FILES:${PN} += "${libdir}/sysusers.d ${libdir}/sysusers.d/munge.conf"
