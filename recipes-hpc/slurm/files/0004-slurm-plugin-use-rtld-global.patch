@@ -1,6 +1,6 @@
---- a/src/common/plugin.c	2026-04-10 14:06:32.773533205 +0200
-+++ slurm-23.11.7/src/common/plugin.c	2026-04-10 14:06:32.779488072 +0200
-@@ -123,7 +123,7 @@
+--- a/src/common/plugin.c	2026-04-11 09:11:39.393638134 +0200
++++ src/common/plugin.c	2026-04-11 09:11:39.402401053 +0200
+@@ -122,7 +122,7 @@
  	plugin_handle_t plug;
  
  	(void) dlerror();
@@ -16,5 +16,5 @@
 -	plug = dlopen(fq_path, RTLD_LAZY);
 +	plug = dlopen(fq_path, RTLD_LAZY | RTLD_GLOBAL);
  	if (plug == NULL) {
- 		error("plugin_load_from_file: dlopen(%s): %s",
- 		      fq_path, dlerror());
+ 		if (required)
+ 			error("plugin_load_from_file: dlopen(%s): %s",

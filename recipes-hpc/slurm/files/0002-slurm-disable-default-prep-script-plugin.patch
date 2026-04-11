@@ -1,5 +1,5 @@
---- a/src/common/read_config.h	2026-04-10 12:42:44.480143170 +0200
-+++ src/common/read_config.h	2026-04-10 12:42:44.483843547 +0200
+--- a/src/common/read_config.h	2026-04-11 09:11:39.363638134 +0200
++++ src/common/read_config.h	2026-04-11 09:11:39.370304800 +0200
 @@ -126,7 +126,7 @@
  #else
  #  define DEFAULT_PROCTRACK_TYPE      "proctrack/pgid"

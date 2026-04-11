@@ -1,6 +1,6 @@
---- a/src/api/Makefile.in	2026-04-10 16:07:29.330279510 +0200
-+++ slurm-23.11.7/src/api/Makefile.in	2026-04-10 16:07:29.338782315 +0200
-@@ -204,7 +204,7 @@
+--- a/src/api/Makefile.in	2026-04-11 09:12:42.123638844 +0200
++++ src/api/Makefile.in	2026-04-11 09:12:42.131134407 +0200
+@@ -207,7 +207,7 @@
  	$(AM_CFLAGS) $(CFLAGS) $(libslurm_pmi_la_LDFLAGS) $(LDFLAGS) \
  	-o $@
  libslurmfull_la_DEPENDENCIES = $(convenience_libs)
@@ -9,7 +9,7 @@
  libslurmfull_la_OBJECTS = $(am_libslurmfull_la_OBJECTS)
  libslurmfull_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
  	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-@@ -736,7 +736,7 @@
+@@ -738,7 +738,7 @@
          -version-info $(current):$(rev):$(age) \
          $(OTHER_FLAGS)
  
