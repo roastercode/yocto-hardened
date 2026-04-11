@@ -4,6 +4,6 @@ BUILD_CFLAGS:append:class-native = " -std=gnu17"
 CFLAGS_FOR_BUILD:append:class-native = " -std=gnu17"
 
 do_patch:append:class-native() {
-    sed -i 's/if test "$cross_compiling" = no; then/if false; then # Gentoo GCC15 compat/g' \
+    sed -i "s/if test \"\$cross_compiling\" = no; then/if false; then # Gentoo GCC15 compat/g" \
         ${S}/configure
 }
