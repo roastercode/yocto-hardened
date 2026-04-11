@@ -27,26 +27,22 @@ INSANE_SKIP += "configure-unsafe"
 INSANE_SKIP:${PN} += "host-user-contaminated"
 
 do_install:append() {
-    # Supprimer les répertoires runtime — créés par le init script
     rm -rf ${D}/var/log
     rm -rf ${D}/var/volatile
     rm -rf ${D}/run
-
-    # Garder uniquement /var/lib/munge et /etc/munge
     install -d ${D}/var/lib/munge
     install -d ${D}/etc/munge
     chmod 0700 ${D}/var/lib/munge
     chmod 0700 ${D}/etc/munge
-
-    # Script init SysVinit
     install -d ${D}${sysconfdir}/init.d
     install -m 0755 ${WORKDIR}/munge.init ${D}${sysconfdir}/init.d/munge
 }
 
+FILES:${PN} += " \
     /var/lib/munge \
     /etc/munge \
     ${sysconfdir}/init.d/munge \
     ${sysconfdir}/default \
-    ${sysconfdir}/logrotate.d"
-
-FILES:${PN} += "${libdir}/sysusers.d ${libdir}/sysusers.d/munge.conf"
+    ${sysconfdir}/logrotate.d \
+    ${libdir}/sysusers.d \
+    ${libdir}/sysusers.d/munge.conf"
