@@ -20,7 +20,7 @@
          $(LIB_LDFLAGS) \
 --- /dev/null
 +++ b/src/api/slurm_stubs.c
-@@ -0,0 +1,139 @@
+@@ -0,0 +1,140 @@
 +/*
 + * Auto-generated stubs for slurmctld-internal symbols
 + * needed by Slurm plugins when loaded by client binaries.
@@ -160,3 +160,4 @@
 +int gres_ctld_job_dealloc(void *jl, void *nl, int nc, int ji, char *nn, int oj, int r) { return 0; }
 +void gres_ctld_job_merge(void *fl, void *fn, void *tl, void *tn) { return; }
 +int gres_ctld_set_node_tres_cnt(void *jl, void **tc, int nc, int lk) { return 0; }
++void hres_select_check() { return; }
