@@ -20,7 +20,7 @@
          $(LIB_LDFLAGS) \
 --- /dev/null
 +++ b/src/api/slurm_stubs.c
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,170 @@
 +/*
 + * Auto-generated stubs for slurmctld-internal symbols
 + * needed by Slurm plugins when loaded by client binaries.
@@ -161,3 +161,33 @@
 +void gres_ctld_job_merge(void *fl, void *fn, void *tl, void *tn) { return; }
 +int gres_ctld_set_node_tres_cnt(void *jl, void **tc, int nc, int lk) { return 0; }
 +void hres_select_check() { return; }
++
++/* Auto-generated stubs for 25.11.4 missing symbols */
++void acct_policy_get_acct_used_limits() { return; }
++void acct_policy_get_user_used_limits() { return; }
++void bf_license_cmp() { return; }
++void check_bf_running_cond() { return; }
++void cluster_license_copy() { return; }
++void cluster_license_count() { return; }
++void gres_stepmgr_job_alloc() { return; }
++void gres_stepmgr_job_alloc_whole_node() { return; }
++void gres_stepmgr_job_build_details() { return; }
++void gres_stepmgr_job_dealloc() { return; }
++void gres_stepmgr_job_merge() { return; }
++void gres_stepmgr_set_job_tres_cnt() { return; }
++void gres_stepmgr_set_node_tres_cnt() { return; }
++void hres_get_capacity() { return; }
++void hres_pre_select() { return; }
++void hres_select_find_leaf() { return; }
++void hres_select_return() { return; }
++void job_mgr_determine_cpus_per_core() { return; }
++void license_find_rec_by_id() { return; }
++void license_list_overlap() { return; }
++void license_list_overlap_non_hres() { return; }
++void node_mgr_make_node_blocked() { return; }
++void part_list_to_xstr() { return; }
++void set_oom_adj_env() { return; }
++void slurm_bf_hres_filter() { return; }
++void slurm_bf_hres_pre_select() { return; }
++void slurm_bf_licenses_relevant_hres_increase() { return; }
++void validate_all_reservations() { return; }
