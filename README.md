@@ -1,4 +1,4 @@
-# meta-custom — Yocto HPC Layer
+# Yocto HPC Layer
 
 Couche Yocto custom pour un cluster HPC mini-labo basé sur KVM/QEMU, Slurm, MPI et NFS.
 
