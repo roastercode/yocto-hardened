@@ -1,121 +1,101 @@
-# Yocto HPC
+# meta-custom — Yocto HPC Layer
 
-Couche Yocto custom Scarthgap / poky-hardened.
+Couche Yocto custom pour un cluster HPC mini-labo basé sur KVM/QEMU, Slurm, MPI et NFS.
+
+## Architecture
+
+spartian-1 (Gentoo, host)
+├── hpc-master      (192.168.56.10) — slurmctld, nfs-server
+├── hpc-compute01   (192.168.56.11) — slurmd
+├── hpc-compute02   (192.168.56.12) — slurmd
+├── hpc-compute03   (192.168.56.13) — slurmd
+└── hpc-storage     (192.168.56.20) — nfs-server, scratch
+
+
+## Versions
+
+| Composant | Version |
+|-----------|---------|
+| Yocto     | Scarthgap (5.0) |
+| Slurm     | 25.11.4 |
+| Munge     | 0.5.15 |
+| PMIx      | 5.0.3 |
+| MPICH     | (meta-oe) |
+| libevent  | 2.1.12 |
 
 ## Branches
 
 | Branche | Description |
 |---------|-------------|
-| `main` | Base minimale, point de départ |
-| `ext4-dm-verity-selinux` | Image durcie : ext4 + dm-verity + SELinux enforcing + overlayfs-etc |
-| `squashfs-selinux-permissive` | Image squashfs + SELinux permissive |
-| `yocto-hpc` | Mini-cluster HPC virtuel (hérite de ext4-dm-verity-selinux) |
+| `main` | Hardening D1-D7 (SELinux, dm-verity) |
+| `yocto-hpc` | Cluster HPC KVM — **branche active** |
 
-## Branche yocto-hpc
+## Build
 
-Construction d'un mini-labo HPC sur KVM/QEMU/libvirt pour apprendre
-l'administration HPC : Slurm, MPI, NFS, benchmarks, environnements modules.
+```bash
+source poky/oe-init-build-env build-qemu-x86
+bitbake hpc-image-master hpc-image-compute hpc-image-storage
+```
 
-### Architecture du cluster
+## Images
 
-| VM | IP | Rôle |
-|----|----|------|
-| master | 192.168.56.10 | Slurm controller, NFS server, login node |
-| compute01 | 192.168.56.11 | Slurm worker, MPI |
-| compute02 | 192.168.56.12 | Slurm worker, MPI |
-| compute03 | 192.168.56.13 | Slurm worker, MPI |
-| storage | 192.168.56.20 | NFS storage, /scratch |
+| Image | Taille | Contenu |
+|-------|--------|---------|
+| hpc-image-master | ~500 Mo | slurmctld, munge, nfs-server, mpich |
+| hpc-image-compute | ~300 Mo | slurmd, munge, nfs-client, mpich, hwloc |
+| hpc-image-storage | ~206 Mo | nfs-server, e2fsprogs |
 
-### Images
+## Déploiement VMs
 
-| Image | Taille | Contenu principal |
-|-------|--------|-------------------|
-| `hpc-image-master` | ~500 Mo | slurmctld, munge, nfs-server, mpich, htop |
-| `hpc-image-compute` | ~300 Mo | slurmd, munge, nfs-client, mpich, hwloc |
-| `hpc-image-storage` | ~206 Mo | nfs-server, e2fsprogs |
+```bash
+DEPLOY=tmp/deploy/images/qemux86-64
+sudo qemu-img convert -f raw -O qcow2 \
+  ${DEPLOY}/hpc-image-master-qemux86-64.ext4 \
+  /var/lib/libvirt/images/hpclab/master.qcow2
+```
 
-### Recettes HPC
-
-| Recette | Version | Notes |
-|---------|---------|-------|
-| `recipes-hpc/libevent/` | 2.1.12 | Dépendance munge/slurm |
-| `recipes-hpc/munge/` | 0.5.15 | Auth cluster, 2 patches cross-compile |
-| `recipes-hpc/pmix/` | 5.0.3 | Process Management Interface |
-| `recipes-hpc/slurm/` | 23.11.7 | Ordonnanceur HPC (sans PAM/MySQL/sview) |
-
-### État du cluster
-
-| Composant | État |
-|-----------|------|
-| VMs KVM (5 nœuds) | ✅ Opérationnel |
-| Réseau hpcnet (192.168.56.0/24) | ✅ DHCP fonctionnel |
-| SSH par clé ed25519 (hpcadmin) | ✅ Fonctionnel sur les 5 nœuds |
-| sudo sans mot de passe (hpcadmin) | ✅ Configuré |
-| SELinux | ⚠️ Permissif (labo) — overlayfs+tmpfs incompatible enforcing |
-| Munge | 🔧 À configurer |
-| Slurm | 🔧 À configurer |
-| NFS /scratch | 🔧 À configurer |
-
-### Accès SSH
+## Accès SSH
 
 ```bash
 ssh -i ~/.ssh/hpclab_admin hpcadmin@192.168.56.10  # master
 ssh -i ~/.ssh/hpclab_admin hpcadmin@192.168.56.11  # compute01
-ssh -i ~/.ssh/hpclab_admin hpcadmin@192.168.56.20  # storage
 ```
 
-La clé privée `~/.ssh/hpclab_admin` n'est jamais versionnée.
-La clé publique est dans `recipes-core/images/files/hpclab_admin.pub`.
+## Cross-compilation Slurm — Patches
 
-### Patches cross-compilation (hôte Gentoo)
+Slurm 25.11.4 nécessite 5 patches pour compiler et fonctionner en cross-compilation Yocto :
 
-- `munge/0001` — fix `AC_RUN_IFELSE` test fifo (impossible en cross-compile)
-- `munge/0002` — fix `AC_CHECK_FILES /dev/spx` (Linux n'a pas /dev/spx)
-- `slurm` — désactivation sview/glib (`AM_PATH_GLIB_2_0` non disponible)
-- `INSANE_SKIP += configure-unsafe` — warning linker `/usr/lib` hôte Gentoo
+| Patch | Problème résolu |
+|-------|----------------|
+| 0001 | `-Wl,--allow-shlib-undefined` sur plugins hdf5 et pmix (97/99 déjà fixés upstream) |
+| 0002 | `DEFAULT_PREP_PLUGINS=""` — prep/script utilise un symbole interne slurmd |
+| 0003 | `-Wl,--export-dynamic` sur slurmctld pour exposer ses symboles aux plugins |
+| 0004 | `RTLD_LAZY\|RTLD_GLOBAL` dans plugin.c pour la résolution de symboles inter-plugins |
+| 0005 | Stubs des symboles internes slurmctld dans libslurmfull pour les outils clients |
 
-### Stack logicielle hôte (Gentoo spartian-1)
+Fork Slurm avec patches : https://github.com/roastercode/slurm/tree/fix/cross-compile-plugin-symbols
 
-- CPU : 20 cœurs, 32 Go RAM, NVMe 512 Go
-- KVM/QEMU 10.2.0, libvirt 11.10.0
-- Réseau : hpcnet (192.168.56.0/24) via virbr1
-- Firewall : nftables — cluster isolé, NAT vers wlo1
+## État du cluster
 
-### Roadmap
+- [x] Munge — authentification inter-nœuds
+- [x] slurmctld — contrôleur Slurm sur master
+- [x] slurmd — daemon compute sur 3 nœuds
+- [x] sinfo — nœuds idle
+- [x] sbatch — jobs exécutés sur compute01-03
+- [ ] cgroup v1 au boot (montage manuel requis)
+- [ ] NFS /scratch
+- [ ] Tests MPI multi-nœuds
 
-Phase 1 — Infrastructure (done)
-✅ Build des 3 images Yocto (libevent, munge, pmix, slurm)
-✅ 5 VMs KVM avec réseau et SSH fonctionnels
-✅ hpcadmin avec clé SSH et sudo
+## TODO
 
-Phase 2 — Services HPC (en cours)
-🔧 Munge — clé partagée sur tous les nœuds
-🔧 Slurm — slurmctld master + slurmd computes
-🔧 NFS — /scratch depuis storage
+1. Intégrer montage cgroup v1 dans hpc-image-compute (fstab ou script init)
+2. Configurer NFS /scratch depuis hpc-storage
+3. Tests MPI multi-nœuds avec mpich
+4. Bug report SchedMD : https://support.schedmd.com/
 
-Phase 3 — Workloads HPC
-🔲 Tests MPI (mpirun, mpiexec)
-🔲 Benchmarks (STREAM, IOR, HPL)
-🔲 Environment modules (lmod)
-🔲 Gestion des jobs (sbatch, squeue, sacct)
+## Sécurité
 
-
-## Distro
-
-`poky-hardened` — hérite de poky avec :
-- SELinux enforcing (refpolicy-targeted)
-- dm-verity sur ext4
-- read-only rootfs
-- /etc writable via overlayfs tmpfs
-- CVE checking activé
-- PAM activé
-- Pas de debug-tweaks
-- Gentoo ajouté aux distros validées (`SANITY_TESTED_DISTROS`)
-
-## Prérequis build
-
-BB_NUMBER_THREADS = "16"
-PARALLEL_MAKE = "-j 16"
-SSTATE_DIR = "${HOME}/yocto/sstate-cache"
-DL_DIR = "${HOME}/yocto/downloads"
-
+- credentials.inc jamais versionné
+- Clés SSH privées hors repo
+- SELinux permissif (overlayfs + tmpfs incompatible enforcing)
+- hpcadmin avec clé ed25519, sudo NOPASSWD, root SSH désactivé
