@@ -43,7 +43,7 @@ do_install:append() {
     install -m 0755 ${WORKDIR}/munge.init ${D}${sysconfdir}/init.d/munge
 }
 
-FILES:${PN} += " \
+FILES:${PN} += "${base_libdir}/sysusers.d  \
     /var/lib/munge \
     /etc/munge \
     ${sysconfdir}/init.d/munge \
