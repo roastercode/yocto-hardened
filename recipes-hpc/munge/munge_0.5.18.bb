@@ -5,8 +5,7 @@ LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504"
 
 SRC_URI = "https://github.com/dun/munge/releases/download/munge-${PV}/munge-${PV}.tar.xz \
-           file://munge.init \
-           file://0002-munge-select-auth-cross-compile.patch"
+           file://munge.init"
 SRC_URI[sha256sum] = "39c3ec6ef5604bfa206e8aa10fc05d5119040f6de4a554bc0fb98ca1aed838dc"
 
 inherit autotools pkgconfig useradd
@@ -21,8 +20,7 @@ USERADD_PARAM:${PN} = "--system --home-dir /var/lib/munge \
 EXTRA_OECONF = " \
     --with-crypto-lib=openssl \
     --localstatedir=/var \
-    --runstatedir=/run \
-"
+    --runstatedir=/run"
 
 LDFLAGS:append = " -Wl,--sysroot=${STAGING_DIR_TARGET}"
 INSANE_SKIP += "configure-unsafe"
@@ -50,5 +48,4 @@ FILES:${PN} += " \
     /etc/munge \
     ${sysconfdir}/init.d/munge \
     ${sysconfdir}/default \
-    ${sysconfdir}/logrotate.d \
-"
+    ${sysconfdir}/logrotate.d"
