@@ -20,7 +20,7 @@
          $(LIB_LDFLAGS) \
 --- /dev/null
 +++ b/src/api/slurm_stubs.c
-@@ -0,0 +1,143 @@
+@@ -0,0 +1,139 @@
 +/*
 + * Auto-generated stubs for slurmctld-internal symbols
 + * needed by Slurm plugins when loaded by client binaries.
@@ -114,7 +114,6 @@
 +void launch_job() { return; }
 +void license_job_test() { return; }
 +void lock_slurmctld() { return; }
-+void lock_state_files() { return; }
 +void mail_job_info() { return; }
 +void part_policy_valid_qos() { return; }
 +void prolog_running_decr() { return; }
@@ -133,9 +132,7 @@
 +void slurm_find_preemptable_jobs() { return; }
 +void sort_job_queue() { return; }
 +void srun_allocate() { return; }
-+void task_cpuset_to_str() { return; }
 +void task_slurm_chkaffinity() { return; }
-+void task_str_to_cpuset() { return; }
 +void test_job_nodes_ready() { return; }
 +void trigger_burst_buffer() { return; }
 +void trigger_primary_ctld_acct_full() { return; }
@@ -144,7 +141,6 @@
 +void trigger_primary_dbd_fail() { return; }
 +void trigger_primary_dbd_res_op() { return; }
 +void ume_notify() { return; }
-+void unlock_state_files() { return; }
 +void update_job_dependency() { return; }
 +void validate_operator() { return; }
 +void validate_super_user() { return; }
