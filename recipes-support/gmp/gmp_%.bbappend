@@ -3,6 +3,6 @@ CFLAGS:append:class-native = " -std=gnu17 -Wno-error"
 BUILD_CFLAGS:append:class-native = " -std=gnu17"
 CFLAGS_FOR_BUILD:append:class-native = " -std=gnu17"
 
-# Force cross_compiling=yes to skip runtime tests
-# gmp checks "if test $cross_compiling = no" before running binary tests
-EXTRA_OECONF:append:class-native = " cross_compiling=yes"
+# gmp configure uses its own gcc invocation ignoring CFLAGS
+# Force std=gnu17 via PATH wrapper
+PATH:prepend:class-native = "${HOME}/yocto/gmp-gcc-wrapper:"
