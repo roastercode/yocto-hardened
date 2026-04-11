@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 SRC_URI = "file://hello-custom.c"
 
 # Le .c est copié directement dans WORKDIR (pas d'archive à extraire)
-S = "${WORKDIR}"
+S = "${WORKDIR}/${BP}"
 
 do_compile() {
     ${CC} ${CFLAGS} ${LDFLAGS} hello-custom.c -o hello-custom
