@@ -4,12 +4,17 @@ Couche Yocto custom pour un cluster HPC mini-labo basé sur KVM/QEMU, Slurm, MPI
 
 ## Architecture
 
-spartian-1 (Gentoo, host)
-├── hpc-master      (192.168.56.10) — slurmctld, nfs-server
-├── hpc-compute01   (192.168.56.11) — slurmd
-├── hpc-compute02   (192.168.56.12) — slurmd
-├── hpc-compute03   (192.168.56.13) — slurmd
-└── hpc-storage     (192.168.56.20) — nfs-server, scratch
+(Gentoo, host)
+
+  ├── hpc-master      (192.168.56.10) — slurmctld, nfs-server
+
+  ├── hpc-compute01   (192.168.56.11) — slurmd
+  
+  ├── hpc-compute02   (192.168.56.12) — slurmd
+  
+  ├── hpc-compute03   (192.168.56.13) — slurmd
+  
+  └── hpc-storage     (192.168.56.20) — nfs-server, scratch
 
 
 ## Versions
