@@ -6,9 +6,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504"
 
 SRC_URI = "https://github.com/dun/munge/releases/download/munge-${PV}/munge-${PV}.tar.xz \
            file://munge.init \
-           file://0001-munge-cross-compile-fifo-test.patch \
            file://0002-munge-select-auth-cross-compile.patch"
-SRC_URI[sha256sum] = "3f979df117a34c74db8fe2835521044bdeb08e3b7d0f168ca97c3547f51da9ba"
+SRC_URI[sha256sum] = "39c3ec6ef5604bfa206e8aa10fc05d5119040f6de4a554bc0fb98ca1aed838dc"
 
 inherit autotools pkgconfig useradd
 
