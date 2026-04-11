@@ -13,9 +13,6 @@ SRC_URI = " \
     https://curl.se/download/${BP}.tar.xz \
     file://run-ptest \
     file://disable-tests \
-    file://no-test-timeout.patch \
-    file://0001-sigpipe-init-the-struct-so-that-first-apply-ignores.patch \
-    file://CVE-2024-9681.patch \
 "
 SRC_URI[sha256sum] = "4eb41489790d19e190d7ac7e18e82857cdd68af8f4e66b292ced562d333f11df"
 
