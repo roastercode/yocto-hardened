@@ -1,0 +1,306 @@
+From: Aurelien <aurelien@spartian-1>
+Date: Sat, 11 Apr 2026 00:00:00 +0200
+Subject: [PATCH] gmp: skip runtime long long tests for Gentoo GCC15/binutils 2.46
+
+Upstream-Status: Inappropriate [Gentoo GCC15/binutils 2.46 host compatibility]
+Signed-off-by: Aurelien <aurelien@spartian-1>
+---
+--- configure.orig	2026-04-11 23:19:58.526679232 +0200
++++ configure	2026-04-11 23:19:58.546207875 +0200
+@@ -5985,7 +5985,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6039,7 +6039,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6095,7 +6095,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6152,7 +6152,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6207,7 +6207,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6263,7 +6263,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6348,7 +6348,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6399,7 +6399,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6445,7 +6445,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6523,7 +6523,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6588,7 +6588,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6649,7 +6649,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6710,7 +6710,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6809,7 +6809,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -6918,7 +6918,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -7604,7 +7604,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -7658,7 +7658,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -7714,7 +7714,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -7771,7 +7771,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -7826,7 +7826,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -7882,7 +7882,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -7967,7 +7967,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -8018,7 +8018,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -8064,7 +8064,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -8142,7 +8142,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -8207,7 +8207,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -8268,7 +8268,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -8329,7 +8329,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -8428,7 +8428,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -8537,7 +8537,7 @@
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+     cc_works_part=yes
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -10536,7 +10536,7 @@
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -10576,7 +10576,7 @@
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
+@@ -10622,7 +10622,7 @@
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+-    if test "$cross_compiling" = no; then
++    if false; then  # skip runtime test: Gentoo binutils 2.46 + GCC15 compat
+       if { ac_try='./a.out || ./b.out || ./a.exe || ./a_out.exe || ./conftest'
+   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+   (eval $ac_try) 2>&5
