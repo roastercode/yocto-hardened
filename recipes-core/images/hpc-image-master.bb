@@ -87,11 +87,8 @@ setup_hpcadmin() {
 
 ROOTFS_POSTPROCESS_COMMAND:append = " preseed_munge_key;"
 preseed_munge_key() {
-    dd if=/dev/urandom bs=1 count=1024 2>/dev/null \
-        > ${IMAGE_ROOTFS}/etc/munge/munge.key
-    chmod 0400 ${IMAGE_ROOTFS}/etc/munge/munge.key
-    # munge user UID=999 GID=999 (USERADD_PARAM in munge recipe)
-    chown 999:999 ${IMAGE_ROOTFS}/etc/munge/munge.key
+    install -m 0400 ${THISDIR}/files/munge.key ${IMAGE_ROOTFS}/etc/munge/munge.key
+    chown 0:0 ${IMAGE_ROOTFS}/etc/munge/munge.key
     chmod 0700 ${IMAGE_ROOTFS}/etc/munge
-    chown 999:999 ${IMAGE_ROOTFS}/etc/munge
+    chown 0:0 ${IMAGE_ROOTFS}/etc/munge
 }
