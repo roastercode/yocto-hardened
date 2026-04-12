@@ -6,3 +6,7 @@ do_configure:append:class-native() {
         sed -i 's|filter -l% -j%|filter -j%|g' ${B}/Makefile
     fi
 }
+
+# Fix struct sched_attr redefinition with glibc 2.42 + GCC 15
+CFLAGS:append:class-native = " -DSCHED_ATTR_DEFINED"
+CXXFLAGS:append:class-native = " -DSCHED_ATTR_DEFINED"
