@@ -1,0 +1,27 @@
+From: Aurelien <aurelien@spartian-1>
+Date: Sat, 12 Apr 2026 00:00:00 +0200
+Subject: [PATCH] qemu: guard sched_attr definition for glibc 2.42+
+
+Upstream-Status: Backport [qemu 9.1+]
+Signed-off-by: Aurelien <aurelien@spartian-1>
+---
+--- a/linux-user/syscall.c	2026-04-12 10:12:02.756737047 +0200
++++ linux-user/syscall.c	2026-04-12 10:17:34.469287520 +0200
+@@ -360,7 +360,8 @@
+ #define __NR_sys_sched_setaffinity __NR_sched_setaffinity
+ _syscall3(int, sys_sched_setaffinity, pid_t, pid, unsigned int, len,
+           unsigned long *, user_mask_ptr);
+-/* sched_attr is not defined in glibc */
++/* sched_attr is not defined in older glibc */
++#ifndef __NR_sched_setattr
+ struct sched_attr {
+     uint32_t size;
+     uint32_t sched_policy;
+@@ -373,6 +374,7 @@
+     uint32_t sched_util_min;
+     uint32_t sched_util_max;
+ };
++#endif /* __NR_sched_setattr */
+ #define __NR_sys_sched_getattr __NR_sched_getattr
+ _syscall4(int, sys_sched_getattr, pid_t, pid, struct sched_attr *, attr,
+           unsigned int, size, unsigned int, flags);
