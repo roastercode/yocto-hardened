@@ -1,3 +1,10 @@
+From: Aurelien <aurelien@spartian-1>
+Date: Sat, 11 Apr 2026 00:00:00 +0200
+Subject: [PATCH] 0003-slurm-slurmctld-export-dynamic
+
+Upstream-Status: Submitted [https://support.schedmd.com/]
+Signed-off-by: Aurelien <aurelien@spartian-1>
+---
 --- a/src/slurmctld/Makefile.am	2026-04-11 09:11:39.380304800 +0200
 +++ src/slurmctld/Makefile.am	2026-04-11 09:11:39.386971467 +0200
 @@ -75,7 +75,7 @@

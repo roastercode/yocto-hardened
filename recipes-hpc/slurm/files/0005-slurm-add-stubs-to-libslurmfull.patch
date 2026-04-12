@@ -1,3 +1,10 @@
+From: Aurelien <aurelien@spartian-1>
+Date: Sat, 11 Apr 2026 00:00:00 +0200
+Subject: [PATCH] 0005-slurm-add-stubs-to-libslurmfull
+
+Upstream-Status: Submitted [https://support.schedmd.com/]
+Signed-off-by: Aurelien <aurelien@spartian-1>
+---
 --- a/src/api/Makefile.in	2026-04-11 09:12:42.123638844 +0200
 +++ src/api/Makefile.in	2026-04-11 09:12:42.131134407 +0200
 @@ -207,7 +207,7 @@

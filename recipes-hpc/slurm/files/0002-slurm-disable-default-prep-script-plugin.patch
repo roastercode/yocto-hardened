@@ -1,3 +1,10 @@
+From: Aurelien <aurelien@spartian-1>
+Date: Sat, 11 Apr 2026 00:00:00 +0200
+Subject: [PATCH] 0002-slurm-disable-default-prep-script-plugin
+
+Upstream-Status: Submitted [https://support.schedmd.com/]
+Signed-off-by: Aurelien <aurelien@spartian-1>
+---
 --- a/src/common/read_config.h	2026-04-11 09:11:39.363638134 +0200
 +++ src/common/read_config.h	2026-04-11 09:11:39.370304800 +0200
 @@ -126,7 +126,7 @@
