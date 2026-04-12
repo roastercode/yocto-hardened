@@ -22,10 +22,7 @@ CVE_STATUS[CVE-2024-32928] = "ignored: CURLOPT_SSL_VERIFYPEER was disabled on go
 
 inherit autotools pkgconfig binconfig multilib_header ptest
 
-# Entropy source for random PACKAGECONFIG option
-RANDOM ?= "/dev/urandom"
 
-COMMON_PACKAGECONFIG = "basic-auth bearer-auth digest-auth negotiate-auth openssl proxy random threaded-resolver verbose zlib"
 PACKAGECONFIG ??= "${COMMON_PACKAGECONFIG} ${@bb.utils.filter('DISTRO_FEATURES', 'ipv6', d)} aws libidn"
 PACKAGECONFIG:class-native = "${COMMON_PACKAGECONFIG} ipv6"
 PACKAGECONFIG:class-nativesdk = "${COMMON_PACKAGECONFIG} ipv6"
@@ -59,7 +56,6 @@ PACKAGECONFIG[nghttp2] = "--with-nghttp2,--without-nghttp2,nghttp2"
 PACKAGECONFIG[openssl] = "--with-openssl,--without-openssl,openssl"
 PACKAGECONFIG[pop3] = "--enable-pop3,--disable-pop3,"
 PACKAGECONFIG[proxy] = "--enable-proxy,--disable-proxy,"
-PACKAGECONFIG[random] = "--with-random=${RANDOM},--without-random"
 PACKAGECONFIG[rtmpdump] = "--with-librtmp,--without-librtmp,rtmpdump"
 PACKAGECONFIG[rtsp] = "--enable-rtsp,--disable-rtsp,"
 PACKAGECONFIG[smb] = "--enable-smb,--disable-smb,"
