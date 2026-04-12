@@ -35,7 +35,7 @@ do_install:append() {
     chmod 0700 ${D}/var/lib/munge
     chmod 0700 ${D}/etc/munge
     install -d ${D}${sysconfdir}/init.d
-    install -m 0755 ${WORKDIR}/munge.init ${D}${sysconfdir}/init.d/munge
+    install -m 0755 ${UNPACKDIR}/munge.init ${D}${sysconfdir}/init.d/munge
 }
 
 FILES:${PN} += " \

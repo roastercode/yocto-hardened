@@ -84,3 +84,11 @@ setup_hpcadmin() {
     echo "hpcadmin ALL=(ALL) NOPASSWD: ALL" >         ${IMAGE_ROOTFS}/etc/sudoers.d/hpcadmin
     chmod 440 ${IMAGE_ROOTFS}/etc/sudoers.d/hpcadmin
 }
+
+ROOTFS_POSTPROCESS_COMMAND:append = " preseed_munge_key;"
+preseed_munge_key() {
+    dd if=/dev/urandom bs=1 count=1024 2>/dev/null \
+        > ${IMAGE_ROOTFS}/etc/munge/munge.key
+    chmod 0400 ${IMAGE_ROOTFS}/etc/munge/munge.key
+    chown 0:0 ${IMAGE_ROOTFS}/etc/munge/munge.key
+}
