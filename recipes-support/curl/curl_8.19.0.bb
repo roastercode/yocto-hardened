@@ -11,7 +11,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=0515352b285b9c3f66464b135c9c0fdc"
 
 SRC_URI = " \
     https://curl.se/download/${BP}.tar.xz \
-    file://run-ptest \
+    file://run-\
     file://disable-tests \
 "
 SRC_URI[sha256sum] = "4eb41489790d19e190d7ac7e18e82857cdd68af8f4e66b292ced562d333f11df"
@@ -20,7 +20,7 @@ SRC_URI[sha256sum] = "4eb41489790d19e190d7ac7e18e82857cdd68af8f4e66b292ced562d33
 CVE_PRODUCT = "haxx:curl haxx:libcurl curl:curl curl:libcurl libcurl:libcurl daniel_stenberg:curl"
 CVE_STATUS[CVE-2024-32928] = "ignored: CURLOPT_SSL_VERIFYPEER was disabled on google cloud services causing a potential man in the middle attack"
 
-inherit autotools pkgconfig binconfig multilib_header ptest
+inherit autotools pkgconfig binconfig multilib_header
 
 
 COMMON_PACKAGECONFIG = "basic-auth bearer-auth digest-auth negotiate-auth openssl proxy threaded-resolver verbose zlib"
@@ -120,7 +120,7 @@ do_install_ptest() {
 	cat ${UNPACKDIR}/disable-tests >>${D}${PTEST_PATH}/tests/data/DISABLED
 }
 
-RDEPENDS:${PN}-ptest += " \
+RDEPENDS:${PN}-+= " \
 	locale-base-en-us \
 	perl-module-b \
 	perl-module-base \
