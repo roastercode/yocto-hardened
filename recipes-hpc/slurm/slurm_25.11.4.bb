@@ -50,9 +50,9 @@ do_install:append() {
     install -d ${D}/etc/slurm
 
     install -d ${D}${sysconfdir}/init.d
-    install -m 0755 ${WORKDIR}/slurmctld.init ${D}${sysconfdir}/init.d/slurmctld
-    install -m 0755 ${WORKDIR}/slurmd.init    ${D}${sysconfdir}/init.d/slurmd
-    install -m 0644 ${WORKDIR}/slurm.conf     ${D}/etc/slurm/slurm.conf
+    install -m 0755 ${UNPACKDIR}/slurmctld.init ${D}${sysconfdir}/init.d/slurmctld
+    install -m 0755 ${UNPACKDIR}/slurmd.init    ${D}${sysconfdir}/init.d/slurmd
+    install -m 0644 ${UNPACKDIR}/slurm.conf     ${D}/etc/slurm/slurm.conf
 
     rm -rf ${D}/run
 }
