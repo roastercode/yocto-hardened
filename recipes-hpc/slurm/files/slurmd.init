@@ -16,7 +16,7 @@ case "$1" in
         echo "Starting slurmd..."
         mkdir -p /run/slurm
         start-stop-daemon --start --quiet --pidfile ${PIDFILE} \
-            --exec ${DAEMON} -- -D &
+            --exec ${DAEMON} -- -D -f /etc/slurm/slurm.conf &
         ;;
     stop)
         echo "Stopping slurmd..."

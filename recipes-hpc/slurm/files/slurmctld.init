@@ -17,7 +17,7 @@ case "$1" in
         mkdir -p /run/slurm
         chown slurm:slurm /run/slurm
         start-stop-daemon --start --quiet --pidfile ${PIDFILE} \
-            --exec ${DAEMON} -- -D &
+            --exec ${DAEMON} -- -D -f /etc/slurm/slurm.conf &
         ;;
     stop)
         echo "Stopping slurmctld..."
