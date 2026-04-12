@@ -4,7 +4,8 @@ HOMEPAGE = "https://slurm.schedmd.com"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=1d61dca3f6cbd0e6c847641f8fd4c233"
 
-SRC_URI = "https://github.com/SchedMD/slurm/archive/refs/tags/slurm-25-11-4-1.tar.gz \
+SRCREV = "5d2c57980a3cf0e2e8e4bb8516f4874f3dc674cb"
+SRC_URI = "git://github.com/SchedMD/slurm.git;protocol=https;branch=slurm-25-11-4-1;tag=slurm-25-11-4-1 \
            file://slurmctld.init \
            file://slurmd.init \
            file://slurm.conf \
@@ -13,9 +14,8 @@ SRC_URI = "https://github.com/SchedMD/slurm/archive/refs/tags/slurm-25-11-4-1.ta
            file://0003-slurm-slurmctld-export-dynamic.patch \
            file://0004-slurm-plugin-use-rtld-global.patch \
            file://0005-slurm-add-stubs-to-libslurmfull.patch"
-SRC_URI[sha256sum] = "15f5a172812868349031d57104323f23d62f1c28537f21d1992c572dffdd93c2"
 
-S = "${WORKDIR}/slurm-slurm-25-11-4-1"
+S = "${WORKDIR}/git"
 
 inherit autotools pkgconfig useradd
 
