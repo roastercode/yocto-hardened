@@ -38,7 +38,7 @@ create_hpc_dirs() {
     mkdir -p ${IMAGE_ROOTFS}/scratch
     mkdir -p ${IMAGE_ROOTFS}/data
     mkdir -p ${IMAGE_ROOTFS}/var/lib/slurm
-    install -d ${IMAGE_ROOTFS}/var/log/slurm
+    mkdir -p ${IMAGE_ROOTFS}/var/log/slurm || true
     mkdir -p ${IMAGE_ROOTFS}/var/volatile/log/slurm
     mkdir -p ${IMAGE_ROOTFS}/etc/munge
     mkdir -p ${IMAGE_ROOTFS}/etc/slurm
