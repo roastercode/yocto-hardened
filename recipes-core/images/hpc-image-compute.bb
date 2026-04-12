@@ -103,3 +103,15 @@ preseed_munge_key() {
     chmod 0700 ${IMAGE_ROOTFS}/etc/munge
     chown 0:0 ${IMAGE_ROOTFS}/etc/munge
 }
+
+ROOTFS_POSTPROCESS_COMMAND:append = " setup_hpc_hostname_compute;"
+setup_hpc_hostname_compute() {
+    cat >> ${IMAGE_ROOTFS}/etc/hosts << 'HOSTSEOF'
+192.168.56.10 master
+192.168.56.11 compute01
+192.168.56.12 compute02
+192.168.56.13 compute03
+192.168.56.20 storage
+HOSTSEOF
+    ln -sf /etc/slurm/slurm.conf ${IMAGE_ROOTFS}/etc/slurm.conf 2>/dev/null || true
+}
