@@ -20,3 +20,6 @@ PV = "7.0+rc7"
 KERNEL_FEATURES:append = " cfg/fs/vfat.scc"
 
 COMPATIBLE_MACHINE = "qemux86-64"
+
+FILESEXTRAPATHS:prepend := "${THISDIR}:"
+SRC_URI:append = " file://dm-verity.cfg"
