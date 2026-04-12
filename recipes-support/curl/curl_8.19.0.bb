@@ -11,7 +11,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=0515352b285b9c3f66464b135c9c0fdc"
 
 SRC_URI = " \
     https://curl.se/download/${BP}.tar.xz \
-    file://run-\
+    file://run-ptest \
     file://disable-tests \
 "
 SRC_URI[sha256sum] = "4eb41489790d19e190d7ac7e18e82857cdd68af8f4e66b292ced562d333f11df"
@@ -149,3 +149,4 @@ inherit multilib_script
 MULTILIB_SCRIPTS = "${PN}-dev:${bindir}/curl-config"
 
 BBCLASSEXTEND = "native nativesdk"
+PTEST_ENABLED = "0"
