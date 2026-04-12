@@ -28,3 +28,13 @@ do_configure:append() {
     ${S}/scripts/kconfig/merge_config.sh -m -O ${B} ${B}/.config ${UNPACKDIR}/dm-verity.cfg
     yes '' | make -C ${S} O=${B} oldconfig
 }
+
+# arm64 support
+COMPATIBLE_MACHINE:append = "|qemuarm64"
+
+SRC_URI:append:qemuarm64 = " file://ftrfs-arm64.cfg"
+
+do_configure:append:qemuarm64() {
+    ${S}/scripts/kconfig/merge_config.sh -m -O ${B} ${B}/.config ${UNPACKDIR}/ftrfs-arm64.cfg
+    yes '' | make -C ${S} O=${B} oldconfig
+}
