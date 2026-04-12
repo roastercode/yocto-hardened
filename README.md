@@ -1,152 +1,90 @@
-# yocto-hardened
+# yocto-hardened — meta-custom
 
-Hardened Yocto layer — custom distro and image with progressive security hardening.
+**Author:** roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
 
-Study project: from minimal image to a fully hardened OS running on real hardware.
+Custom Yocto layer implementing progressive security hardening on Yocto Styhead (5.1).
 
-## Layer: meta-custom
+## Repository Branches
 
-Custom Yocto layer providing:
-- A hardened distro (`poky-hardened`)
-- A hardened image (`custom-image`)
-- Example recipe (`hello-custom`)
+| Branch | Description | Target |
+|--------|-------------|--------|
+| `main` | Base hardening D1-D7, reference branch | QEMU x86-64 |
+| `ext4-dm-verity-selinux` | ext4 + dm-verity + SELinux enforcing | BeagleBone Black |
+| `squashfs-selinux-permissive` | SquashFS + SELinux permissive + dm-verity | BeagleBone Black |
+| `yocto-hpc` | KVM HPC cluster — Slurm 25.11.4, benchmarked | QEMU/KVM |
+
+## Hardening Matrix
+
+| Level | Measure | main | ext4-dm-verity | squashfs | yocto-hpc |
+|-------|---------|------|----------------|----------|-----------|
+| D1 | Compiler flags (SSP, FORTIFY, RELRO, PIE) | ✅ | ✅ | ✅ | ✅ |
+| D2 | No debug-tweaks + hashed root password | ✅ | ✅ | ✅ | ✅ |
+| D3 | Read-only rootfs + overlayfs-etc | ✅ | ✅ | ✅ | ✅ |
+| D4 | CVE checking (NVD database) | ✅ | ✅ | ✅ | ✅ |
+| D5 | Custom hardened distro (poky-hardened) | ✅ | ✅ | ✅ | ✅ |
+| D6 | SELinux refpolicy-targeted | permissive | enforcing | permissive | permissive |
+| D7 | dm-verity kernel support | ✅ | ✅ | ✅ | ✅ |
+| D8 | dm-verity bootloader integration | 🔧 | 🔧 | ✅ | N/A |
+| D9 | IMA/EVM runtime file integrity | 🔲 | 🔲 | 🔲 | 🔲 |
+| D10 | Secure Boot | 🔲 | 🔲 | 🔲 | 🔲 |
 
 ---
 
-## Overall Hardening Status
+## This Branch — `ext4-dm-verity-selinux`
 
-| Level | Measure | Status |
-|-------|---------|--------|
-| D1 | Compiler flags (stack protector, FORTIFY, RELRO, PIE) | ✅ Poky default |
-| D2 | No debug-tweaks + hashed root password | ✅ Done |
-| D3 | Read-only rootfs | ✅ Done |
-| D4 | CVE checking (NVD database) | ✅ Done |
-| D5 | Custom hardened distro (`poky-hardened`) | ✅ Done |
-| D6 | SELinux enforcing — build-time labeling | ✅ Done |
-| D7 | dm-verity kernel support | ✅ Done |
-| D8 | dm-verity bootloader integration | 🔧 In progress |
-| D9 | IMA/EVM (runtime file integrity) | 🔲 Todo |
-| D10 | Secure Boot | 🔲 Todo |
+Full hardening with ext4 + dm-verity + SELinux enforcing.
+Target: **BeagleBone Black** booting from SD, rootfs on external HDD.
 
----
+### Architecture
 
-## Branches
+kernel → dm-verity verify ext4 (ro) → SELinux enforcing → userspace
+/          ext4 (read-only, dm-verity hash verified at boot)
+/etc       overlayfs upper = tmpfs (writable, volatile)
 
-| Branche | Description | Cible |
-|---------|-------------|-------|
-| `main` | Base minimale, point de départ | QEMU |
-| `ext4-dm-verity-selinux` | Image durcie : ext4 + dm-verity + SELinux enforcing | BeagleBone Black |
-| `squashfs-selinux-permissive` | Image squashfs + SELinux permissive | BeagleBone Black |
-| `yocto-hpc` | Mini-cluster HPC virtuel (5 VMs KVM) | QEMU/KVM |
 
-### `ext4-dm-verity-selinux` — Full hardening, BeagleBone Black + external HDD
+### Status
 
-Target: **BeagleBone Black** booting from SD card, rootfs on **external HDD (USB/SATA)**.
-
-- ext4 + dm-verity + SELinux enforcing
-- U-Boot passes root hash at boot
-- Full integrity verification at runtime
-
-**Current state:**
-- ✅ SELinux enforcing with build-time labeling (`getenforce` → `Enforcing`, 0 `unlabeled_t` files)
-- ✅ dm-verity kernel support built
-- 🔧 dm-verity bootloader integration (U-Boot root hash passing)
+- ✅ SELinux enforcing with build-time labeling (getenforce → Enforcing)
+- ✅ dm-verity kernel support (CONFIG_DM_VERITY=y)
+- ✅ Zero unlabeled_t files at boot
+- 🔧 dm-verity U-Boot bootloader integration (root hash passing)
 - 🔧 AVC denials at boot to resolve (hwclock, busybox, overlayfs)
-- 🔲 Port to BeagleBone Black (MACHINE target + BSP layer)
+- 🔲 BeagleBone Black port (meta-ti BSP layer)
 - 🔲 Validate on real hardware
 
-### `squashfs-selinux-permissive` — Compact image, BeagleBone Black standalone
-
-Target: **BeagleBone Black** standalone, rootfs on **SD card or eMMC**.
-
-- squashfs (native read-only, compressed — suited for constrained flash storage)
-- SELinux permissive (first step, enforce once policy is refined)
-
-**Current state:**
-- 🔧 Base image boots in QEMU
-- 🔲 SELinux policy refinement → switch to enforcing
-- 🔲 Port to BeagleBone Black
-- 🔲 Validate on real hardware
-
----
-
-## Key lessons learned (ext4-dm-verity-selinux)
+### Key lessons learned
 
 | Problem | Root cause | Fix |
 |---------|-----------|-----|
-| `selinux_set_labels` override ignored | `inherit selinux-image` appeared **after** the function definition | Move all `inherit` statements **before** function definitions |
-| `setfiles` writing `"kernel"` as context | `FC` variable collides with BitBake's Fortran compiler variable | Rename to `SEL_FC`, `SEL_FC_LOCAL`, `SEL_POLICY` |
-| `setfiles` validating against host (Gentoo) SELinux policy | Missing `-c policyfile` | Add `-c ${SEL_POLICY}` to validate against target `policy.33` |
-| Stale ext4 with wrong xattrs | sstate caching the pre-fix image | `bitbake custom-image -c cleansstate && bitbake custom-image` |
-
----
-
-## Roadmap
-
-Phase 1 — QEMU validation (done)
-✅ SELinux enforcing, 0 unlabeled files
-✅ dm-verity kernel support
-✅ read-only rootfs + overlayfs-etc
-
-Phase 2 — Policy refinement + dm-verity bootloader (in progress)
-🔧 Fix AVC denials at boot (hwclock, busybox, overlayfs)
-🔧 U-Boot integration: pass dm-verity root hash at boot
-🔧 squashfs branch: SELinux permissive → enforcing
-
-Phase 3 — BeagleBone Black port
-🔲 Add meta-ti or meta-arm BSP layer
-🔲 MACHINE = "beaglebone-yocto"
-🔲 Adapt kernel config and bootloader
-
-Phase 4 — Hardware deployment validation
-🔲 squashfs image on BBB SD/eMMC
-🔲 ext4 + dm-verity image on BBB + external HDD
-🔲 Full boot-to-login on real hardware
-
-Phase 5 — HPC cluster (done in yocto-hpc branch)
-✅ 5 VMs KVM avec Slurm, MPI, NFS
-✅ SSH par clé, hpcadmin sudo
-
-
----
-
-## Usage
-
-### Prerequisites
-
-poky (scarthgap)
-meta-openembedded/meta-oe
-meta-openembedded/meta-python
-meta-selinux
-
-
-### Setup
-
-```bash
-# Add to bblayers.conf
-/path/to/meta-custom
-
-# Set distro in local.conf
-DISTRO = "poky-hardened"
-
-# Create credentials (never commit this file)
-cp recipes-core/images/credentials.inc.example recipes-core/images/credentials.inc
-
-# Edit credentials.inc with your hashed password
-# Generate hash: openssl passwd -6 "yourpassword"
-```
+| selinux_set_labels override ignored | inherit after function definition | Move all inherit before functions |
+| setfiles writing "kernel" as context | FC collides with BitBake Fortran var | Rename to SEL_FC |
+| setfiles validating against host policy | Missing -c policyfile | Add -c to validate against target policy.33 |
+| Stale ext4 with wrong xattrs | sstate caching | bitbake -c cleansstate && bitbake |
 
 ### Build
 
 ```bash
 source oe-init-build-env build-qemu-x86
-bitbake custom-image
+bitbake custom-image -c cleansstate && bitbake custom-image
 ```
 
-> **Note**: After any change to SELinux labeling logic, run `bitbake custom-image -c cleansstate && bitbake custom-image` to ensure the ext4 is regenerated from a clean state.
+### Verify dm-verity root hash
+
+```bash
+cat tmp/deploy/images/qemux86-64/custom-image-qemux86-64.verity-roothash
+```
 
 ### Run in QEMU
 
 ```bash
 runqemu nographic slirp custom-image-qemux86-64.qemuboot.conf
 ```
+
+---
+
+## Security Notes
+
+- credentials.inc is never versioned
+- Private SSH keys kept outside the repo
+- SELinux enforcing with refpolicy-targeted
+- Read-only rootfs verified by dm-verity at boot
