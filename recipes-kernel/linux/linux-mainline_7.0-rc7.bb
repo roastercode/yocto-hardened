@@ -25,6 +25,6 @@ FILESEXTRAPATHS:prepend := "${THISDIR}:"
 SRC_URI:append = " file://dm-verity.cfg"
 
 do_configure:append() {
-    ${S}/scripts/kconfig/merge_config.sh -m -O ${B} ${B}/.config ${WORKDIR}/dm-verity.cfg
+    ${S}/scripts/kconfig/merge_config.sh -m -O ${B} ${B}/.config ${UNPACKDIR}/dm-verity.cfg
     yes '' | make -C ${S} O=${B} oldconfig
 }
