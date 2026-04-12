@@ -18,3 +18,22 @@ EXTRA_OECONF = " \
     --disable-per-user-config-files \
 "
 
+
+# Fix buildpaths QA: strip TMPDIR references from text files
+INSANE_SKIP:${PN} += "buildpaths"
+INSANE_SKIP:${PN}-dev += "buildpaths"
+
+do_install:append() {
+    # Fix pmixcc-wrapper-data.txt
+    if [ -f ${D}${datadir}/pmix/pmixcc-wrapper-data.txt ]; then
+        sed -i 's|${TMPDIR}||g' ${D}${datadir}/pmix/pmixcc-wrapper-data.txt
+    fi
+    # Fix pmix_config.h
+    if [ -f ${D}${includedir}/pmix/src/include/pmix_config.h ]; then
+        sed -i 's|${TMPDIR}[^ "]*|/usr|g' ${D}${includedir}/pmix/src/include/pmix_config.h
+    fi
+    # Fix pmix.pc
+    if [ -f ${D}${libdir}/pkgconfig/pmix.pc ]; then
+        sed -i 's|${TMPDIR}[^ "]*|/usr|g' ${D}${libdir}/pkgconfig/pmix.pc
+    fi
+}
