@@ -5,7 +5,7 @@ LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=1d61dca3f6cbd0e6c847641f8fd4c233"
 
 SRCREV = "5d2c57980a3cf0e2e8e4bb8516f4874f3dc674cb"
-SRC_URI = "git://github.com/SchedMD/slurm.git;protocol=https;branch=master \
+SRC_URI = "git://github.com/SchedMD/slurm.git;protocol=https;nobranch=1 \
            file://slurmctld.init \
            file://slurmd.init \
            file://slurm.conf \
