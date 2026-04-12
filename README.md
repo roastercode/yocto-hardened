@@ -1,4 +1,4 @@
-# meta-custom — Yocto HPC Layer
+# Yocto HPC Layer
 
 Custom Yocto layer for a mini-lab HPC cluster based on KVM/QEMU, Slurm, MPI and NFS.
 Built on Yocto Styhead (5.1) with full system hardening (read-only rootfs, overlayfs-etc,
@@ -6,7 +6,7 @@ SELinux permissive, dm-verity support).
 
 ---
 
-## Benchmark Results — April 12, 2026
+## Benchmark Results - April 12, 2026
 
 Cluster: 1 master + 3 compute nodes (KVM/QEMU on Gentoo, i7-12700F)
 
