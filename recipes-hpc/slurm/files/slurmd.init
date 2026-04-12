@@ -7,16 +7,16 @@
 # Default-Stop:      0 1 6
 # Short-Description: Slurm compute daemon
 ### END INIT INFO
-
 DAEMON=/usr/sbin/slurmd
 PIDFILE=/run/slurm/slurmd.pid
-
 case "$1" in
     start)
         echo "Starting slurmd..."
         mkdir -p /run/slurm
-        start-stop-daemon --start --quiet --pidfile ${PIDFILE} \
-            --exec ${DAEMON} -- -D -f /etc/slurm/slurm.conf &
+        mkdir -p /var/log/slurm
+        start-stop-daemon --start --quiet --background --make-pidfile \
+            --pidfile ${PIDFILE} \
+            --exec ${DAEMON} -- -f /etc/slurm/slurm.conf
         ;;
     stop)
         echo "Stopping slurmd..."
