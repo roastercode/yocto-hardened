@@ -1,95 +1,97 @@
-# yocto-hardened
+# yocto-hardened — meta-custom
 
-Hardened Yocto layer for studies — custom distro and image with progressive security hardening.
+**Author:** roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
 
-## Layer: meta-custom
+Custom Yocto layer implementing progressive security hardening on Yocto Styhead (5.1).
 
-Custom Yocto layer providing:
-- A hardened distro (`poky-hardened`)
-- A hardened image (`custom-image`)
-- Example recipe (`hello-custom`)
-- Custom dm-verity class (`dm-verity-image.bbclass`)
+## Repository Branches
 
-## Branches
+| Branch | Description | Target |
+|--------|-------------|--------|
+| `main` | Base hardening D1-D7, reference branch | QEMU x86-64 |
+| `ext4-dm-verity-selinux` | ext4 + dm-verity + SELinux enforcing | BeagleBone Black |
+| `squashfs-selinux-permissive` | SquashFS + SELinux permissive + dm-verity | BeagleBone Black |
+| `yocto-hpc` | KVM HPC cluster — Slurm 25.11.4, benchmarked | QEMU/KVM |
 
-| Branch | Description | Trade-off |
-|--------|-------------|-----------|
-| `main` | Base hardening D1-D7 | Reference branch |
-| `squashfs-selinux-permissive` | **Option A** : SquashFS + SELinux permissive | SquashFS has no xattr support → SELinux cannot enforce labels. Suitable for space/embedded where
-filesystem immutability (dm-verity) is the primary protection and SELinux is used for audit only |
-| `ext4-dm-verity-selinux` | **Option B** : ext4 + dm-verity + SELinux enforcing | Full MAC enforcement. Higher storage overhead, no compression. Suitable for systems requiring strict
-process isolation |
+## Hardening Matrix
 
-## Hardening Status
+| Level | Measure | main | ext4-dm-verity | squashfs | yocto-hpc |
+|-------|---------|------|----------------|----------|-----------|
+| D1 | Compiler flags (SSP, FORTIFY, RELRO, PIE) | ✅ | ✅ | ✅ | ✅ |
+| D2 | No debug-tweaks + hashed root password | ✅ | ✅ | ✅ | ✅ |
+| D3 | Read-only rootfs + overlayfs-etc | ✅ | ✅ | ✅ | ✅ |
+| D4 | CVE checking (NVD database) | ✅ | ✅ | ✅ | ✅ |
+| D5 | Custom hardened distro (poky-hardened) | ✅ | ✅ | ✅ | ✅ |
+| D6 | SELinux refpolicy-targeted | permissive | enforcing | permissive | permissive |
+| D7 | dm-verity kernel support | ✅ | ✅ | ✅ | ✅ |
+| D8 | dm-verity bootloader integration | 🔧 | 🔧 | ✅ | N/A |
+| D9 | IMA/EVM runtime file integrity | 🔲 | 🔲 | 🔲 | 🔲 |
+| D10 | Secure Boot | 🔲 | 🔲 | 🔲 | 🔲 |
 
-| Level | Measure | Status |
-|-------|---------|--------|
-| D1 | Compiler flags (stack protector, FORTIFY, RELRO, PIE) | ✅ Poky default |
-| D2 | No debug-tweaks + hashed root password | ✅ Done |
-| D3 | Read-only rootfs | ✅ Done |
-| D4 | CVE checking (NVD database) | ✅ Done |
-| D5 | Custom hardened distro (`poky-hardened`) | ✅ Done |
-| D6 | SELinux enforcing (refpolicy-targeted) | ✅ Done (ext4 branch) / ⚠️ Permissive (squashfs branch) |
-| D7 | dm-verity + SquashFS kernel support | ✅ Done |
-| D8 | dm-verity hash tree generation + overlayfs-etc | ✅ Done |
-| D9 | IMA/EVM (runtime file integrity) | 🔲 Todo |
-| D10 | Secure Boot | 🔲 Todo |
+---
 
-## Architecture (Option A — squashfs-selinux-permissive)
+## This Branch — `squashfs-selinux-permissive`
 
-Boot sequence:
-  kernel → mount squashfs (ro) → overlayfs /etc (tmpfs) → userspace
+Compact hardened image with SquashFS + SELinux permissive + dm-verity.
+Target: **BeagleBone Black** standalone, rootfs on SD card or eMMC.
 
-Storage layout:
-  /          squashfs (read-only, compressed, dm-verity protected)
-  /etc       overlayfs upper = tmpfs (writable, lost on reboot)
-  /data      tmpfs (RAM, volatile)
-  /var/lib   overlayfs upper = tmpfs (writable, volatile)
+### Architecture
 
-## Architecture (Option B — ext4-dm-verity-selinux)
+kernel → mount squashfs (ro, dm-verity) → overlayfs /etc (tmpfs) → userspace
+/          SquashFS (read-only, compressed, dm-verity protected)
+/etc       overlayfs upper = tmpfs (writable, volatile, lost on reboot)
+/data      tmpfs (RAM, volatile)
+/var/lib   overlayfs upper = tmpfs (writable, volatile)
 
-Boot sequence:
-  kernel → dm-verity verify ext4 (ro) → SELinux enforcing → userspace
 
-Storage layout:
-  /          ext4 (read-only, dm-verity hash verified at boot)
-  /etc       overlayfs upper = tmpfs (writable, volatile)
+### Trade-off vs ext4-dm-verity-selinux
 
-## Usage
+SquashFS has no native xattr support, so SELinux cannot enforce labels on
+the rootfs directly. This branch uses SELinux permissive mode for audit only.
+dm-verity provides the primary integrity guarantee. For full MAC enforcement,
+use the `ext4-dm-verity-selinux` branch instead.
 
-### Prerequisites
+| Criterion | squashfs-selinux-permissive | ext4-dm-verity-selinux |
+|-----------|----------------------------|------------------------|
+| Filesystem | SquashFS (compressed) | ext4 |
+| SELinux | permissive (audit) | enforcing (MAC) |
+| Storage | compact, suited for flash | higher overhead |
+| dm-verity | ✅ | ✅ |
+| xattr support | ❌ (SELinux labels in memory) | ✅ |
 
-poky (scarthgap)
-meta-openembedded/meta-oe
-meta-openembedded/meta-python
-meta-selinux
+### Status
 
-### Setup
+- ✅ Base image boots in QEMU
+- ✅ SquashFS + overlayfs-etc functional
+- ✅ dm-verity hash generation
+- 🔧 SELinux policy refinement → switch to enforcing
+- 🔲 BeagleBone Black port (meta-ti BSP layer)
+- 🔲 Validate on real hardware
+
+### Build
 
 ```bash
-# Add to bblayers.conf
-/path/to/meta-custom
-/path/to/meta-openembedded/meta-oe
-/path/to/meta-openembedded/meta-python
-/path/to/meta-selinux
-
-# Set distro in local.conf
-DISTRO = "poky-hardened"
-
-# Create credentials (never commit this file)
-cp recipes-core/images/credentials.inc.example recipes-core/images/credentials.inc
-# Edit credentials.inc with your hashed password
-# Generate hash: openssl passwd -6 "yourpassword"
-
-Build
-
 source oe-init-build-env build-qemu-x86
 bitbake custom-image
+```
 
-Run in QEMU
+### Verify dm-verity root hash
 
-runqemu nographic slirp custom-image-qemux86-64.qemuboot.conf
-
-Verify dm-verity root hash
-
+```bash
 cat tmp/deploy/images/qemux86-64/custom-image-qemux86-64.verity-roothash
+```
+
+### Run in QEMU
+
+```bash
+runqemu nographic slirp custom-image-qemux86-64.qemuboot.conf
+```
+
+---
+
+## Security Notes
+
+- credentials.inc is never versioned
+- Private SSH keys kept outside the repo
+- SELinux permissive — dm-verity provides primary integrity protection
+- Read-only rootfs (SquashFS), writable /etc via overlayfs on tmpfs
