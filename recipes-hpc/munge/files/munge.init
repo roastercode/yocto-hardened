@@ -10,20 +10,21 @@
 
 DAEMON=/usr/sbin/munged
 PIDFILE=/run/munge/munged.pid
-MUNGE_USER=munge
 
 case "$1" in
     start)
         echo "Starting MUNGE..."
         mkdir -p /run/munge
-        chown ${MUNGE_USER}:${MUNGE_USER} /run/munge
         chmod 0755 /run/munge
         if [ ! -f /etc/munge/munge.key ]; then
             echo "ERROR: /etc/munge/munge.key manquant"
             exit 1
         fi
+        # munge.key doit appartenir a root avec permissions 0400
+        chown 0:0 /etc/munge/munge.key
         chmod 0400 /etc/munge/munge.key
-        chown ${MUNGE_USER}:${MUNGE_USER} /etc/munge/munge.key
+        chown 0:0 /etc/munge
+        chmod 0700 /etc/munge
         start-stop-daemon --start --quiet \
             --pidfile ${PIDFILE} \
             --exec ${DAEMON} -- --syslog
