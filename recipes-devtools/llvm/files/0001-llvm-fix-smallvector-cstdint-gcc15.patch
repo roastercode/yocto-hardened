@@ -9,8 +9,8 @@ Fixed in upstream LLVM 19+.
 Upstream-Status: Backport [llvm 19+]
 Signed-off-by: Aurelien <aurelien@spartian-1>
 ---
---- a/llvm/include/llvm/ADT/SmallVector.h	2026-04-12 11:48:14.110015372 +0200
-+++ b/llvm/include/llvm/ADT/SmallVector.h	2026-04-12 11:48:14.117325429 +0200
+--- a/include/llvm/ADT/SmallVector.h	2026-04-12 11:48:14.110015372 +0200
++++ b/include/llvm/ADT/SmallVector.h	2026-04-12 11:48:14.117325429 +0200
 @@ -19,6 +19,7 @@
  #include <algorithm>
  #include <cassert>
