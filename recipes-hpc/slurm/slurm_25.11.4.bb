@@ -102,3 +102,11 @@ do_install:append() {
 # (send_slurmd_conf_lite non résolu en cross-compilation)
 do_install:append() {
 }
+
+# buildpaths in DWARF debug info and binaries — unavoidable in cross-compile
+INSANE_SKIP:${PN} += "buildpaths"
+INSANE_SKIP:${PN}-dbg += "buildpaths"
+INSANE_SKIP:${PN}-slurmctld += "buildpaths"
+INSANE_SKIP:${PN}-slurmd += "buildpaths"
+INSANE_SKIP:${PN}-dev += "buildpaths"
+INSANE_SKIP:${PN}-staticdev += "buildpaths"
