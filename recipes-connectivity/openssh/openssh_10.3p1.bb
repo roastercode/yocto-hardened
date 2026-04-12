@@ -155,6 +155,8 @@ do_install:append () {
 		${D}${sysconfdir}/init.d/sshd
 
 	install -D -m 0755 ${UNPACKDIR}/sshd_check_keys ${D}${libexecdir}/${BPN}/sshd_check_keys
+	install -D -m 0755 ${B}/sshd-session ${D}${libexecdir}/sshd-session
+	install -D -m 0755 ${B}/sshd-auth ${D}${libexecdir}/sshd-auth
 }
 
 do_install_ptest () {
@@ -170,7 +172,7 @@ FILES:${PN}-scp = "${bindir}/scp.${BPN}"
 FILES:${PN}-ssh = "${bindir}/ssh.${BPN} ${sysconfdir}/ssh/ssh_config"
 FILES:${PN}-sshd = "${sbindir}/sshd ${sysconfdir}/init.d/sshd ${systemd_system_unitdir}"
 FILES:${PN}-sshd += "${sysconfdir}/ssh/moduli ${sysconfdir}/ssh/sshd_config ${sysconfdir}/ssh/sshd_config_readonly ${sysconfdir}/default/volatiles/99_sshd ${sysconfdir}/pam.d/sshd"
-FILES:${PN}-sshd += "${libexecdir}/${BPN}/sshd_check_keys"
+FILES:${PN}-sshd += "${libexecdir}/${BPN}/sshd_check_keys ${libexecdir}/sshd-session ${libexecdir}/sshd-auth"
 FILES:${PN}-sftp = "${bindir}/sftp"
 FILES:${PN}-sftp-server = "${libexecdir}/sftp-server"
 FILES:${PN}-misc = "${bindir}/ssh* ${libexecdir}/ssh*"
