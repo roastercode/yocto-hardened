@@ -23,3 +23,8 @@ COMPATIBLE_MACHINE = "qemux86-64"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}:"
 SRC_URI:append = " file://dm-verity.cfg"
+
+do_configure:append() {
+    ${S}/scripts/kconfig/merge_config.sh -m -O ${B} ${B}/.config ${WORKDIR}/dm-verity.cfg
+    yes '' | make -C ${S} O=${B} oldconfig
+}
