@@ -24,11 +24,16 @@ All 14 test jobs completed successfully across compute01, compute02, compute03.
 
 ## Architecture
 
-spartian-1 (Gentoo host, i7-12700F, 32GB RAM)
+(Gentoo host, i7-12700F, 32GB RAM)
+
 ├── hpc-master      (192.168.56.10) — slurmctld, nfs-server
+
 ├── hpc-compute01   (192.168.56.11) — slurmd
+
 ├── hpc-compute02   (192.168.56.12) — slurmd
+
 ├── hpc-compute03   (192.168.56.13) — slurmd
+
 └── hpc-storage     (192.168.56.20) — nfs-server, scratch
 
 
