@@ -9,7 +9,7 @@ SRC_URI = "git://github.com/SchedMD/slurm.git;protocol=https;nobranch=1 \
            file://slurmctld.init \
            file://slurmd.init \
            file://slurm.conf \
-           file://cgroup.conf
+           file://cgroup.conf \
            file://0001-slurm-fix-all-plugins-cross-compile-undefined-symbol.patch \
            file://0002-slurm-disable-default-prep-script-plugin.patch \
            file://0003-slurm-slurmctld-export-dynamic.patch \
