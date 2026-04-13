@@ -29,6 +29,7 @@ IMAGE_INSTALL = " \
     lsof \
     nmap \
     ftrfs-module \
+    mkfs-ftrfs \
     ${CORE_IMAGE_EXTRA_INSTALL} \
 "
 IMAGE_ROOTFS_SIZE ?= "307200"
