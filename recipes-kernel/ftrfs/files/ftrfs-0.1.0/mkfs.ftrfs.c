@@ -17,6 +17,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <linux/fs.h>
 #include <errno.h>
 #include <stddef.h>
 
@@ -66,25 +68,25 @@ struct ftrfs_super_block {
 	uint32_t s_crc32;
 	uint8_t  s_uuid[16];
 	uint8_t  s_label[32];
-	uint8_t  s_pad[3948];
+	uint8_t  s_pad[3980];
 } __attribute__((packed));
 
 struct ftrfs_inode {
 	uint16_t i_mode;
-	uint16_t i_uid;
-	uint16_t i_gid;
 	uint16_t i_nlink;
+	uint32_t i_uid;
+	uint32_t i_gid;
 	uint64_t i_size;
 	uint64_t i_atime;
 	uint64_t i_mtime;
 	uint64_t i_ctime;
-	uint32_t i_blocks;
 	uint32_t i_flags;
+	uint32_t i_crc32;
 	uint64_t i_direct[FTRFS_DIRECT_BLOCKS];
 	uint64_t i_indirect;
 	uint64_t i_dindirect;
-	uint32_t i_crc32;
-	uint8_t  i_pad[2];
+	uint64_t i_tindirect;
+	uint8_t  i_reserved[84];
 } __attribute__((packed));
 
 struct ftrfs_dir_entry {
@@ -121,9 +123,15 @@ int main(int argc, char *argv[])
 	struct stat st;
 	if (fstat(fd, &st) < 0) { perror("fstat"); return 1; }
 
-	uint64_t total_bytes = (S_ISBLK(st.st_mode))
-		? (uint64_t)st.st_size  /* block dev: use ioctl in real mkfs */
-		: (uint64_t)st.st_size;
+	uint64_t total_bytes;
+	if (S_ISBLK(st.st_mode)) {
+		if (ioctl(fd, BLKGETSIZE64, &total_bytes) < 0) {
+			perror("ioctl BLKGETSIZE64");
+			return 1;
+		}
+	} else {
+		total_bytes = (uint64_t)st.st_size;
+	}
 
 	uint64_t total_blocks = total_bytes / FTRFS_BLOCK_SIZE;
 	if (total_blocks < 16) {
@@ -133,7 +141,7 @@ int main(int argc, char *argv[])
 
 	/* Layout:
 	 * Block 0      : superblock
-	 * Block 1-4    : inode table (4 blocks = 128 inodes @ 128B each)
+	 * Block 1-4    : inode table (4 blocks = 64 inodes @ 256B each)
 	 * Block 5      : root dir data
 	 * Block 6+     : free data blocks
 	 */
@@ -185,7 +193,6 @@ int main(int argc, char *argv[])
 	ri->i_gid    = 0;
 	ri->i_nlink  = 2;
 	ri->i_size   = FTRFS_BLOCK_SIZE;
-	ri->i_blocks = 1;
 	ri->i_direct[0] = root_dir_blk;
 	ri->i_crc32  = crc32(ri, offsetof(struct ftrfs_inode, i_crc32));
 
