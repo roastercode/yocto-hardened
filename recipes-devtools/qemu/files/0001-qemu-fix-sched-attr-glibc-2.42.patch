@@ -1,9 +1,9 @@
-From: Aurelien <aurelien@spartian-1>
+From: Aurélien DESBRIERES <aurelien@hackers.camp>
 Date: Sat, 12 Apr 2026 00:00:00 +0200
 Subject: [PATCH] qemu: guard sched_attr definition for glibc 2.42+
 
 Upstream-Status: Backport [qemu 9.1+]
-Signed-off-by: Aurelien <aurelien@spartian-1>
+Signed-off-by: Aurélien DESBRIERES <aurelien@hackers.camp>
 ---
 --- a/linux-user/syscall.c	2026-04-12 10:12:02.756737047 +0200
 +++ linux-user/syscall.c	2026-04-12 10:17:34.469287520 +0200

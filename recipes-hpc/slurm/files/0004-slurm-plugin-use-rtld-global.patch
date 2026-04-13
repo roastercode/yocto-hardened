@@ -1,9 +1,9 @@
-From: Aurelien <aurelien@spartian-1>
+From: Aurélien DESBRIERES <aurelien@hackers.camp>
 Date: Sat, 11 Apr 2026 00:00:00 +0200
 Subject: [PATCH] 0004-slurm-plugin-use-rtld-global
 
 Upstream-Status: Submitted [https://support.schedmd.com/]
-Signed-off-by: Aurelien <aurelien@spartian-1>
+Signed-off-by: Aurélien DESBRIERES <aurelien@hackers.camp>
 ---
 --- a/src/common/plugin.c	2026-04-11 09:11:39.393638134 +0200
 +++ src/common/plugin.c	2026-04-11 09:11:39.402401053 +0200

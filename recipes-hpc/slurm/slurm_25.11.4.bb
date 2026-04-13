@@ -55,6 +55,7 @@ do_install:append() {
     install -m 0755 ${UNPACKDIR}/slurmd.init    ${D}${sysconfdir}/init.d/slurmd
     install -m 0644 ${UNPACKDIR}/slurm.conf     ${D}/etc/slurm/slurm.conf
     install -m 0644 ${UNPACKDIR}/cgroup.conf   ${D}/etc/slurm/cgroup.conf
+    install -m 0644 ${UNPACKDIR}/cgroup.conf   ${D}/etc/cgroup.conf
 
     rm -rf ${D}/run
 }
@@ -62,6 +63,7 @@ do_install:append() {
 FILES:${PN} += " \
     /var/lib/slurm \
     /etc/slurm \
+    /etc/cgroup.conf \
     ${sysconfdir}/init.d/slurmctld \
     ${sysconfdir}/init.d/slurmd \
 "
@@ -89,13 +91,13 @@ do_install:append() {
     # Slurm installe les binaires avec le préfixe cross-compilateur
     # Créer des symlinks sans préfixe pour un usage normal
     for bin in slurmctld slurmd slurmdbd slurmstepd sackd; do
-        if [ -f ${D}${sbindir}/x86_64-poky-linux-${bin} ]; then
-            ln -sf x86_64-poky-linux-${bin} ${D}${sbindir}/${bin}
+        if [ -f ${D}${sbindir}/${TARGET_SYS}-${bin} ]; then
+            ln -sf ${TARGET_SYS}-${bin} ${D}${sbindir}/${bin}
         fi
     done
     for bin in srun sbatch squeue sinfo scancel scontrol sacct salloc; do
-        if [ -f ${D}${bindir}/x86_64-poky-linux-${bin} ]; then
-            ln -sf x86_64-poky-linux-${bin} ${D}${bindir}/${bin}
+        if [ -f ${D}${bindir}/${TARGET_SYS}-${bin} ]; then
+            ln -sf ${TARGET_SYS}-${bin} ${D}${bindir}/${bin}
         fi
     done
 }

@@ -1,9 +1,9 @@
-From: Aurelien <aurelien@spartian-1>
+From: Aurélien DESBRIERES <aurelien@hackers.camp>
 Date: Sat, 11 Apr 2026 00:00:00 +0200
 Subject: [PATCH] 0001-slurm-fix-all-plugins-cross-compile-undefined-symbol
 
 Upstream-Status: Submitted [https://support.schedmd.com/]
-Signed-off-by: Aurelien <aurelien@spartian-1>
+Signed-off-by: Aurélien DESBRIERES <aurelien@hackers.camp>
 ---
 --- a/src/plugins/mpi/pmix/Makefile.am	2026-04-11 09:11:07.850304449 +0200
 +++ src/plugins/mpi/pmix/Makefile.am	2026-04-11 09:11:07.858300800 +0200

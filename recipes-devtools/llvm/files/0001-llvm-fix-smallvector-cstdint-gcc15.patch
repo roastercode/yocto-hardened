@@ -1,4 +1,4 @@
-From: Aurelien <aurelien@spartian-1>
+From: Aurélien DESBRIERES <aurelien@hackers.camp>
 Date: Sun, 12 Apr 2026 00:00:00 +0200
 Subject: [PATCH] llvm: add missing <cstdint> include in SmallVector.h for GCC 15
 
@@ -7,7 +7,7 @@ SmallVector.h uses uint64_t without including <cstdint> explicitly.
 Fixed in upstream LLVM 19+.
 
 Upstream-Status: Backport [llvm 19+]
-Signed-off-by: Aurelien <aurelien@spartian-1>
+Signed-off-by: Aurélien DESBRIERES <aurelien@hackers.camp>
 ---
 --- a/include/llvm/ADT/SmallVector.h	2026-04-12 11:48:14.110015372 +0200
 +++ b/include/llvm/ADT/SmallVector.h	2026-04-12 11:48:14.117325429 +0200
