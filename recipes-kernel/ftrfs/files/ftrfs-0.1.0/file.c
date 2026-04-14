@@ -79,7 +79,7 @@ static void ftrfs_readahead(struct readahead_control *rac)
 
 static int ftrfs_write_begin(const struct kiocb *iocb,
 			     struct address_space *mapping,
-			     loff_t pos, unsigned len,
+			     loff_t pos, unsigned int len,
 			     struct folio **foliop, void **fsdata)
 {
 	return block_write_begin(mapping, pos, len, foliop, ftrfs_get_block);
@@ -87,7 +87,7 @@ static int ftrfs_write_begin(const struct kiocb *iocb,
 
 static int ftrfs_write_end(const struct kiocb *iocb,
 			   struct address_space *mapping,
-			   loff_t pos, unsigned len, unsigned copied,
+			   loff_t pos, unsigned int len, unsigned int copied,
 			   struct folio *folio, void *fsdata)
 {
 	return generic_write_end(iocb, mapping, pos, len, copied, folio, fsdata);
