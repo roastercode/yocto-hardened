@@ -90,10 +90,10 @@ ROOTFS_POSTPROCESS_COMMAND:append = " setup_hostname_master;"
 setup_hostname_master() {
     echo "arm64-master" > ${IMAGE_ROOTFS}/etc/hostname
     cat >> ${IMAGE_ROOTFS}/etc/hosts << 'HOSTSEOF'
-192.168.57.10 arm64-master
-192.168.57.11 arm64-compute01
-192.168.57.12 arm64-compute02
-192.168.57.13 arm64-compute03
+192.168.56.10 arm64-master
+192.168.56.11 arm64-compute01
+192.168.56.12 arm64-compute02
+192.168.56.13 arm64-compute03
 HOSTSEOF
     ln -sf /etc/slurm/slurm.conf ${IMAGE_ROOTFS}/etc/slurm.conf 2>/dev/null || true
 }
