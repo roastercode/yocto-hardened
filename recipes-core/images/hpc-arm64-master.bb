@@ -134,3 +134,20 @@ ${HPC_COMPUTE03_IP} ${HPC_COMPUTE03_HOSTNAME}
 HOSTSEOF
     ln -sf /etc/slurm/slurm.conf ${IMAGE_ROOTFS}/etc/slurm.conf 2>/dev/null || true
 }
+
+# Generate slurm.conf from template + hpc-config.inc variables
+ROOTFS_POSTPROCESS_COMMAND:append = " setup_slurm_conf;"
+setup_slurm_conf() {
+    CONF=${IMAGE_ROOTFS}/etc/slurm/slurm.conf
+    install -m 0644 \
+        ${THISDIR}/../../recipes-hpc/slurm/files/slurm.conf \
+        ${CONF}
+    sed -i "s|@HPC_CLUSTER_NAME@|${HPC_CLUSTER_NAME}|g"       ${CONF}
+    sed -i "s|@HPC_MASTER_HOSTNAME@|${HPC_MASTER_HOSTNAME}|g"  ${CONF}
+    cat >> ${CONF} << SLURMEOF
+NodeName=${HPC_COMPUTE01_HOSTNAME} NodeAddr=${HPC_COMPUTE01_IP} CPUs=${HPC_NODE_CPUS} RealMemory=${HPC_NODE_MEMORY_MB} State=UNKNOWN
+NodeName=${HPC_COMPUTE02_HOSTNAME} NodeAddr=${HPC_COMPUTE02_IP} CPUs=${HPC_NODE_CPUS} RealMemory=${HPC_NODE_MEMORY_MB} State=UNKNOWN
+NodeName=${HPC_COMPUTE03_HOSTNAME} NodeAddr=${HPC_COMPUTE03_IP} CPUs=${HPC_NODE_CPUS} RealMemory=${HPC_NODE_MEMORY_MB} State=UNKNOWN
+PartitionName=compute Nodes=${HPC_COMPUTE01_HOSTNAME},${HPC_COMPUTE02_HOSTNAME},${HPC_COMPUTE03_HOSTNAME} Default=YES MaxTime=4:00:00 State=UP
+SLURMEOF
+}
