@@ -1,190 +1,131 @@
-# meta-custom — Yocto arm64 FTRFS HPC Layer
+# yocto-hardened-hpc
 
-Custom Yocto layer for an arm64 HPC cluster with FTRFS as data partition,
-based on KVM/QEMU, Slurm 25.11.4, and the FTRFS fault-tolerant filesystem.
-Built on Yocto Styhead (5.1) targeting qemuarm64 (cortex-a57, Linux 7.0-rc7).
+Yocto layer providing a complete hardened embedded Linux stack for HPC
+and space applications. Validated on arm64 kernel 7.0 (Yocto Styhead 5.1).
 
----
+## What this layer provides
 
-## Benchmark Results — April 13, 2026
-
-Cluster: 1 master + 3 compute nodes (KVM/QEMU on Gentoo, i7-12700F)
-FTRFS partition: 64 MiB per node (/dev/vdb, mounted at /var/tmp/ftrfs)
-
-| Test | Result |
-|------|--------|
-| Job submission latency (single node) | 0.079s |
-| 3-node parallel job (N=3, ntasks=3) | 0.392s |
-| 9-job throughput submission | 0.481s |
-| Job distribution | perfect balance |
-| Nodes at test time | compute[01-03] idle → running |
-| FTRFS mount | ✅ all nodes |
-| ftrfs.ko (arm64, Linux 7.0-rc7) | ✅ |
-
-All 9 test jobs completed successfully across compute01, compute02, compute03.
-
----
+- **FTRFS** — Fault-Tolerant Radiation-Robust Filesystem (Reed-Solomon FEC,
+  CRC32, Radiation Event Journal). Out-of-tree kernel module for Linux 7.0.
+  See https://github.com/roastercode/FTRFS
+- **Slurm 25.11.4** — HPC workload manager, cross-compiled for arm64
+- **Munge 0.5.18** — authentication service for Slurm
+- **PMIx 5.0.3** — process management interface for HPC
+- **Reference HPC cluster images** — 1 master + N compute nodes, buildable
+  from scratch with a single `bitbake` invocation
 
 ## Architecture
 
 ```
-spartian-1 (Gentoo host, i7-12700F, 32GB RAM)
-├── arm64-master      (192.168.56.10) — slurmctld, munge
-│   └── /dev/vdb      — FTRFS 64 MiB data partition
-├── arm64-compute01   (192.168.56.11) — slurmd
-│   └── /dev/vdb      — FTRFS 64 MiB data partition
-├── arm64-compute02   (192.168.56.12) — slurmd
-│   └── /dev/vdb      — FTRFS 64 MiB data partition
-└── arm64-compute03   (192.168.56.13) — slurmd
-    └── /dev/vdb      — FTRFS 64 MiB data partition
+/boot      squashfs or ext4 (read-only)
+/          ext4 + dm-verity (read-only, verified at boot)
+/data      FTRFS (read-write, RS FEC, Radiation Event Journal)
+/var/log   FTRFS (read-write)
 ```
 
-## Component Versions
+FTRFS protects read-write data partitions against SEU-induced silent
+corruption. dm-verity protects the read-only root filesystem at boot.
+See https://github.com/roastercode/FTRFS/blob/main/Documentation/system-architecture.md
 
-| Component    | Version        |
-|--------------|----------------|
-| Yocto        | Styhead (5.1)  |
-| Slurm        | 25.11.4        |
-| Munge        | 0.5.18         |
-| PMIx         | 5.0.3          |
-| OpenSSH      | 10.3p1         |
-| MPICH        | (meta-oe)      |
-| libevent     | 2.1.12         |
-| Linux kernel | 7.0-rc7 mainline |
-| FTRFS module | 0.1.0          |
+## Validated configuration
 
-## Branches
+| Component     | Version       |
+|---------------|---------------|
+| Yocto         | Styhead (5.1) |
+| Kernel        | 7.0.0         |
+| Architecture  | arm64 (QEMU cortex-a57) |
+| Slurm         | 25.11.4       |
+| Munge         | 0.5.18        |
+| PMIx          | 5.0.3         |
+| FTRFS         | 0.1.0         |
 
-| Branch | Description |
-|--------|-------------|
-| `main` | System hardening D1-D7 (SELinux, dm-verity) |
-| `yocto-hpc` | KVM HPC cluster x86-64 — Slurm 25.11.4 |
-| `arm64-ftrfs` | arm64 HPC cluster with FTRFS data partition — **this branch** |
+## Quick start
 
-## Host Requirements
+### 1. Clone and set up Yocto
 
-| Tool    | Version  |
-|---------|----------|
-| GCC     | 15.2.1   |
-| Python  | 3.11.15  |
-| glibc   | 2.42     |
-| Git     | 2.52.0   |
-| ninja   | 1.13+    |
+```sh
+git clone https://git.yoctoproject.org/poky -b styhead
+cd poky
+git clone https://github.com/roastercode/yocto-hardened \
+    --branch arm64-ftrfs meta-yocto-hardened-hpc
+```
 
-> **Note:** This layer includes fixes for GCC 15 + glibc 2.42 + ninja 1.13
-> incompatibilities that affect Yocto Styhead builds on a modern Gentoo host.
+### 2. Configure credentials
 
-## Build
+```sh
+cd meta-yocto-hardened-hpc/recipes-core/images
+cp credentials.inc.example credentials.inc
+# Edit credentials.inc: replace hash with output of: openssl passwd -6 yourpassword
+```
 
-```bash
-cd ~/yocto/poky
+### 3. Generate cluster secrets
+
+```sh
+# Munge authentication key (shared across all nodes)
+dd if=/dev/urandom bs=1 count=1024 > files/munge.key
+chmod 400 files/munge.key
+
+# Admin SSH key
+ssh-keygen -t ed25519 -f files/hpclab_admin -N ""
+# Public key will be at files/hpclab_admin.pub
+```
+
+### 4. Configure the cluster
+
+Edit `recipes-core/images/hpc-config.inc` or set in `local.conf`:
+
+```bitbake
+HPC_ADMIN_PUBKEY_FILE = "${LAYERDIR}/recipes-core/images/files/hpclab_admin.pub"
+HPC_MUNGE_KEY_FILE    = "${LAYERDIR}/recipes-core/images/files/munge.key"
+```
+
+Optionally adjust network addresses:
+
+```bitbake
+HPC_MASTER_IP    = "192.168.56.10"
+HPC_COMPUTE01_IP = "192.168.56.11"
+HPC_COMPUTE02_IP = "192.168.56.12"
+HPC_COMPUTE03_IP = "192.168.56.13"
+```
+
+### 5. Build
+
+```sh
 source oe-init-build-env build-qemu-arm64
-bitbake hpc-arm64-master hpc-arm64-compute
+
+# Add to bblayers.conf:
+#   /path/to/poky/meta-yocto-hardened-hpc
+
+# Build master and compute images
+bitbake hpc-arm64-master
+bitbake hpc-arm64-compute
 ```
 
-## Images
+### 6. Deploy FTRFS partition on each node
 
-| Image | Size | Contents |
-|-------|------|----------|
-| hpc-arm64-master | ~500 MB | slurmctld, munge, ftrfs-module |
-| hpc-arm64-compute | ~311 MB | slurmd, munge, ftrfs-module |
-
-## FTRFS Integration
-
-Each node boots with a dedicated FTRFS partition on /dev/vdb.
-The module is loaded and the partition mounted at runtime:
-
-```bash
-insmod /lib/modules/7.0.0-rc7/updates/ftrfs.ko
-mkdir -p /var/tmp/ftrfs
-mount -t ftrfs /dev/vdb /var/tmp/ftrfs
+```sh
+# After boot, on each node:
+sudo modprobe ftrfs
+sudo mkfs.ftrfs /dev/vdb
+sudo mount -t ftrfs /dev/vdb /data
 ```
 
-Format a FTRFS image from the host:
+## Important: files excluded from version control
 
-```bash
-gcc -o mkfs.ftrfs mkfs.ftrfs.c
-dd if=/dev/zero of=ftrfs.img bs=4096 count=16384
-./mkfs.ftrfs ftrfs.img
-```
+The following files contain secrets and are excluded via `.gitignore`.
+They must be generated locally before building:
 
-FTRFS source: https://github.com/roastercode/FTRFS
+| File | How to generate |
+|------|-----------------|
+| `recipes-core/images/credentials.inc` | Copy from `.example`, set hash via `openssl passwd -6` |
+| `recipes-core/images/files/munge.key` | `dd if=/dev/urandom bs=1 count=1024 > munge.key` |
+| `recipes-core/images/files/hpclab_admin.pub` | `ssh-keygen -t ed25519 -f hpclab_admin` |
 
-## VM Deployment
+## License
 
-```bash
-DEPLOY=tmp/deploy/images/qemuarm64
+MIT — see LICENSE file.
 
-sudo cp ${DEPLOY}/hpc-arm64-master-qemuarm64.ext4 \
-    /var/lib/libvirt/images/hpc-arm64/arm64-master.ext4
+## Author
 
-for node in compute01 compute02 compute03; do
-    sudo cp ${DEPLOY}/hpc-arm64-compute-qemuarm64.ext4 \
-        /var/lib/libvirt/images/hpc-arm64/arm64-${node}.ext4
-    sudo /path/to/mkfs.ftrfs \
-        /var/lib/libvirt/images/hpc-arm64/ftrfs-${node}.img
-done
-
-sudo virsh start arm64-master
-sudo virsh start arm64-compute01
-sudo virsh start arm64-compute02
-sudo virsh start arm64-compute03
-```
-
-## SSH Access
-
-```bash
-ssh -i ~/.ssh/hpclab_admin hpcadmin@192.168.56.10  # master
-ssh -i ~/.ssh/hpclab_admin hpcadmin@192.168.56.11  # compute01
-```
-
----
-
-## Slurm 25.11.4 Cross-Compilation Patches (arm64)
-
-| Patch | Issue fixed |
-|-------|-------------|
-| 0001 | -Wl,--allow-shlib-undefined on all plugins |
-| 0002 | DEFAULT_PREP_PLUGINS="" — prep/script undefined symbol |
-| 0003 | -Wl,--export-dynamic on slurmctld |
-| 0004 | RTLD_LAZY\|RTLD_GLOBAL in plugin.c |
-| 0005 | Stubs for internal slurmctld symbols in libslurmfull |
-
-Binary symlinks: `aarch64-poky-linux-slurmctld` → `slurmctld` (TARGET_SYS).
-
-## Slurm Runtime Configuration
-
-- SlurmctldHost=master
-- ProctrackType=proctrack/linuxproc (no cgroup dependency)
-- CgroupPlugin=disabled (/etc/cgroup.conf)
-- CPUs=4, RealMemory=462 (cortex-a57, 4 vCPU, 512 MiB)
-
----
-
-## Cluster Status
-
-- [x] SSH access (OpenSSH 10.3p1, ed25519 key)
-- [x] Munge 0.5.18 — inter-node authentication
-- [x] slurmctld — Slurm controller on master
-- [x] slurmd — compute daemon on 3 nodes
-- [x] sinfo — nodes idle
-- [x] sbatch / srun — jobs running on compute[01-03]
-- [x] FTRFS 0.1.0 — module loaded, partition mounted on all nodes
-- [x] Benchmark — 9 jobs, perfect load balance
-
-## TODO
-
-1. Auto-start munge/slurm/ftrfs at boot via init.d
-2. Static /etc/hosts in image (avoid manual setup)
-3. NFS /scratch over FTRFS
-4. Multi-node MPI tests
-
-## Security Notes
-
-- credentials.inc is never versioned
-- Private SSH keys kept outside the repo
-- SELinux permissive
-- Read-only rootfs with overlayfs-etc on tmpfs
-- dm-verity kernel support enabled
-- hpcadmin with ed25519 key, sudo NOPASSWD, root SSH disabled
-- munge.key: 1024 bytes random, root:root 0400
+Aurelien DESBRIERES `<aurelien@hackers.camp>`  
+RFC submitted to linux-fsdevel, April 2026.

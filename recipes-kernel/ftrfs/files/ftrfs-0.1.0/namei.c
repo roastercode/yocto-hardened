@@ -55,8 +55,40 @@ static int ftrfs_write_inode_raw(struct inode *inode)
 	raw->i_dindirect = fi->i_dindirect;
 	raw->i_tindirect = fi->i_tindirect;
 
+	/*
+	 * Zero i_reserved before RS encoding and CRC32.
+	 * i_reserved[0..15]  : RS parity (written below)
+	 * i_reserved[16..83] : always zero (DFRWS 2025 anti-slack)
+	 */
+	memset(raw->i_reserved, 0, sizeof(raw->i_reserved));
+
+	/*
+	 * RS FEC on inode metadata: encode the first FTRFS_INODE_RS_DATA
+	 * bytes (all fields before i_reserved) and store 16 parity bytes
+	 * in i_reserved[0..15]. This protects inode metadata against
+	 * single-event upsets without requiring external redundancy.
+	 *
+	 * i_crc32 is computed after RS encoding so it covers both the
+	 * metadata fields and the parity bytes.
+	 */
+	if (fi->i_flags & FTRFS_INODE_FL_RS_ENABLED) {
+		/*
+		 * RS encode requires exactly FTRFS_SUBBLOCK_DATA (239) bytes.
+		 * Pad the inode data (172 bytes) into a zeroed 239-byte buffer
+		 * before encoding. The parity covers the padded buffer.
+		 */
+		u8 rs_buf[FTRFS_SUBBLOCK_DATA];
+		u8 parity[FTRFS_INODE_RS_PAR];
+
+		memset(rs_buf, 0, sizeof(rs_buf));
+		memcpy(rs_buf, raw, FTRFS_INODE_RS_DATA);
+
+		if (ftrfs_rs_encode(rs_buf, parity) == 0)
+			memcpy(raw->i_reserved, parity, FTRFS_INODE_RS_PAR);
+	}
+
 	raw->i_crc32 = ftrfs_crc32(raw,
-				    offsetof(struct ftrfs_inode, i_crc32));
+				   offsetof(struct ftrfs_inode, i_crc32));
 
 	mark_buffer_dirty(bh);
 	brelse(bh);
@@ -98,14 +130,13 @@ static int ftrfs_add_dirent(struct inode *dir, const struct qstr *name,
 				de->d_ino       = cpu_to_le64(ino);
 				de->d_name_len  = name->len;
 				de->d_file_type = file_type;
-				de->d_rec_len   = cpu_to_le16(
-					sizeof(struct ftrfs_dir_entry));
+				de->d_rec_len =
+					cpu_to_le16(sizeof(struct ftrfs_dir_entry));
 				memcpy(de->d_name, name->name, name->len);
 				de->d_name[name->len] = '\0';
 				mark_buffer_dirty(bh);
 				brelse(bh);
-				inode_set_mtime_to_ts(dir,
-					current_time(dir));
+				inode_set_mtime_to_ts(dir, current_time(dir));
 				mark_inode_dirty(dir);
 				return 0;
 			}
@@ -178,6 +209,17 @@ static int ftrfs_del_dirent(struct inode *dir, const struct qstr *name)
 		while (offset + sizeof(*de) <= FTRFS_BLOCK_SIZE) {
 			de = (struct ftrfs_dir_entry *)(bh->b_data + offset);
 
+			/*
+			 * A zeroed entry (d_rec_len == 0) means a previously
+			 * deleted slot. Skip it with a fixed step rather than
+			 * stopping the scan — subsequent entries may still be
+			 * valid.
+			 */
+			if (!de->d_rec_len) {
+				offset += sizeof(*de);
+				continue;
+			}
+
 			if (de->d_ino &&
 			    de->d_name_len == name->len &&
 			    !memcmp(de->d_name, name->name, name->len)) {
@@ -185,14 +227,11 @@ static int ftrfs_del_dirent(struct inode *dir, const struct qstr *name)
 				memset(de, 0, sizeof(*de));
 				mark_buffer_dirty(bh);
 				brelse(bh);
-				inode_set_mtime_to_ts(dir,
-					current_time(dir));
+				inode_set_mtime_to_ts(dir, current_time(dir));
 				mark_inode_dirty(dir);
 				return 0;
 			}
 
-			if (!de->d_rec_len)
-				break;
 			offset += le16_to_cpu(de->d_rec_len);
 		}
 		brelse(bh);
@@ -369,11 +408,51 @@ static int ftrfs_unlink(struct inode *dir, struct dentry *dentry)
 
 static int ftrfs_rmdir(struct inode *dir, struct dentry *dentry)
 {
-	struct inode *inode = d_inode(dentry);
-	int           ret;
+	struct inode            *inode = d_inode(dentry);
+	struct ftrfs_inode_info *fi    = FTRFS_I(inode);
+	struct super_block      *sb    = inode->i_sb;
+	struct buffer_head      *bh;
+	struct ftrfs_dir_entry  *de;
+	unsigned long            block_no;
+	unsigned int             offset;
+	int                      i, ret;
 
-	if (inode->i_nlink > 2)
-		return -ENOTEMPTY;
+	/*
+	 * Verify the directory is empty: scan all direct blocks and check
+	 * that no entries other than '.' and '..' exist. Testing i_nlink > 2
+	 * is insufficient — regular files do not increment nlink on the parent,
+	 * so a directory with only files can have nlink == 2 but still be
+	 * non-empty.
+	 */
+	for (i = 0; i < FTRFS_DIRECT_BLOCKS; i++) {
+		block_no = le64_to_cpu(fi->i_direct[i]);
+		if (!block_no)
+			break;
+
+		bh = sb_bread(sb, block_no);
+		if (!bh)
+			return -EIO;
+
+		offset = 0;
+		while (offset + sizeof(*de) <= FTRFS_BLOCK_SIZE) {
+			de = (struct ftrfs_dir_entry *)(bh->b_data + offset);
+			if (!de->d_rec_len) {
+				offset += sizeof(*de);
+				continue;
+			}
+
+			if (de->d_ino &&
+			    !(de->d_name_len == 1 && de->d_name[0] == '.') &&
+			    !(de->d_name_len == 2 &&
+			      de->d_name[0] == '.' &&
+			      de->d_name[1] == '.')) {
+				brelse(bh);
+				return -ENOTEMPTY;
+			}
+			offset += le16_to_cpu(de->d_rec_len);
+		}
+		brelse(bh);
+	}
 
 	ret = ftrfs_del_dirent(dir, &dentry->d_name);
 	if (ret)

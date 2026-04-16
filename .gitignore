@@ -1,9 +1,15 @@
-# Secrets — ne jamais versionner
+# Secrets — never commit these
 recipes-core/images/credentials.inc
+recipes-core/images/files/munge.key
+recipes-core/images/files/hpclab_admin
+recipes-core/images/files/hpclab_admin.pub
+recipes-core/images/files/*.key
+recipes-core/images/files/*.pub
+recipes-core/images/files/*.pem
 
-# Artefacts de build
+# Emacs backup files
+*~
+
+# Yocto build artifacts
 *.pyc
 __pycache__/
-
-# Backups vim
-*~

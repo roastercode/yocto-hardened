@@ -43,17 +43,35 @@ static void crc32_init(void)
 	crc32_init_done = 1;
 }
 
-static uint32_t crc32(const void *buf, size_t len)
+/*
+ * crc32_internal — compute CRC32, returning the raw internal state (no XOR).
+ * seed: initial internal state (0xFFFFFFFF for first block, carry for chaining)
+ */
+static uint32_t crc32_internal(uint32_t seed, const void *buf, size_t len)
 {
 	if (!crc32_init_done) crc32_init();
-	uint32_t c = 0xFFFFFFFF;
+	uint32_t c = seed;
 	const uint8_t *p = buf;
 	while (len--)
 		c = crc32_table[(c ^ *p++) & 0xFF] ^ (c >> 8);
-	return c ^ 0xFFFFFFFF;
+	return c;
+}
+
+static uint32_t crc32(const void *buf, size_t len)
+{
+	return crc32_internal(0xFFFFFFFF, buf, len) ^ 0xFFFFFFFF;
 }
 
 /* On-disk structures (must match kernel ftrfs.h) */
+#define FTRFS_RS_JOURNAL_SIZE  64
+
+struct ftrfs_rs_event {
+	uint64_t re_block_no;
+	uint64_t re_timestamp;
+	uint32_t re_error_bits;
+	uint32_t re_crc32;
+} __attribute__((packed)); /* 24 bytes */
+
 struct ftrfs_super_block {
 	uint32_t s_magic;
 	uint32_t s_block_size;
@@ -68,8 +86,24 @@ struct ftrfs_super_block {
 	uint32_t s_crc32;
 	uint8_t  s_uuid[16];
 	uint8_t  s_label[32];
-	uint8_t  s_pad[3980];
+	struct ftrfs_rs_event s_rs_journal[FTRFS_RS_JOURNAL_SIZE]; /* 1536 bytes */
+	uint8_t  s_rs_journal_head;
+	uint8_t  s_pad[2443];        /* padding to 4096 bytes */
 } __attribute__((packed));
+
+/*
+ * crc32_sb — CRC32 over superblock fields matching ftrfs_crc32_sb() in kernel.
+ * Covers [0, offsetof(s_crc32)) and [offsetof(s_uuid), offsetof(s_pad)).
+ */
+static uint32_t crc32_sb(const struct ftrfs_super_block *sb)
+{
+	const uint8_t *base = (const uint8_t *)sb;
+	uint32_t c;
+
+	c = crc32_internal(0xFFFFFFFF, base, 64);
+	c = crc32_internal(c, base + 68, 1653 - 68);
+	return c ^ 0xFFFFFFFF;
+}
 
 struct ftrfs_inode {
 	uint16_t i_mode;
@@ -210,7 +244,7 @@ int main(int argc, char *argv[])
 	sb.s_inode_table_blk = inode_table_blk;
 	sb.s_data_start_blk  = data_start_blk;
 	sb.s_version        = 1;
-	sb.s_crc32          = crc32(&sb, offsetof(struct ftrfs_super_block, s_crc32));
+	sb.s_crc32          = crc32_sb(&sb);
 
 	write_block(fd, 0, &sb);
 	close(fd);
