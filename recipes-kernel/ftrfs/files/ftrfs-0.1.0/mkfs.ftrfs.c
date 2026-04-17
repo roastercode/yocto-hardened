@@ -111,7 +111,7 @@ static uint32_t crc32_sb(const struct ftrfs_super_block *sb)
 	uint32_t c;
 
 	c = crc32_internal(0xFFFFFFFF, base, 64);
-	c = crc32_internal(c, base + 68, 1653 - 68);
+	c = crc32_internal(c, base + 68, 1661 - 68);
 	return c ^ 0xFFFFFFFF;
 }
 
