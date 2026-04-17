@@ -1,40 +1,61 @@
 # yocto-hardened — meta-custom
 
-**Author:** roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
+**Author:** roastercode — Aurelien DESBRIERES `<aurelien@hackers.camp>`
 
 Custom Yocto layer (meta-custom) implementing progressive security hardening
 on top of Yocto Styhead (5.1) with `poky-hardened` distro.
 
 Study project: from a minimal hardened image to a fully hardened OS,
-then a production-grade HPC cluster.
+then a production-grade HPC cluster with fault-tolerant filesystem.
 
 ---
 
 ## Repository Branches
 
-| Branch | Description | Target |
-|--------|-------------|--------|
-| `main` | Base hardening D1-D7, reference branch | QEMU x86-64 |
-| `ext4-dm-verity-selinux` | ext4 + dm-verity + SELinux enforcing | BeagleBone Black |
-| `squashfs-selinux-permissive` | SquashFS + SELinux permissive + dm-verity | BeagleBone Black |
-| `yocto-hpc` | KVM HPC cluster — Slurm 25.11.4, benchmarked | QEMU/KVM |
+| Branch | Description | Target | Status |
+|--------|-------------|--------|--------|
+| `main` | Base hardening D1-D7, reference branch | QEMU x86-64 | stable |
+| `ext4-dm-verity-selinux` | ext4 + dm-verity + SELinux enforcing | BeagleBone Black | stable |
+| `squashfs-selinux-permissive` | SquashFS + SELinux permissive + dm-verity | BeagleBone Black | stable |
+| `yocto-hpc` | KVM HPC cluster — Slurm 25.11.4 (x86-64) | QEMU/KVM | archived |
+| `arm64-ftrfs` | **Active** — arm64 HPC + FTRFS filesystem | QEMU arm64 / KVM | **active** |
+
+### Branch relationships
+
+```
+main  ──────────────────────────────────────── base hardening D1-D7
+  ├── ext4-dm-verity-selinux ──────────────── dm-verity + SELinux enforcing
+  ├── squashfs-selinux-permissive ──────────── squashfs + dm-verity
+  ├── yocto-hpc (archived) ─────────────────── HPC x86-64 precursor
+  └── arm64-ftrfs (ACTIVE) ─────────────────── arm64 + FTRFS + HPC
+```
+
+**`arm64-ftrfs` is the primary development branch.** It contains:
+- FTRFS out-of-tree kernel module (RS FEC, CRC32, Radiation Event Journal)
+- Slurm 25.11.4 HPC cluster (1 master + 3 compute nodes)
+- Full benchmark procedure and reproducible deployment scripts
+- All recent hardening fixes and documentation
+
+See [arm64-ftrfs branch](https://github.com/roastercode/yocto-hardened/tree/arm64-ftrfs)
+and the [FTRFS kernel filesystem](https://github.com/roastercode/FTRFS).
 
 ---
 
 ## Hardening Levels (D1–D10)
 
-| Level | Measure | main | ext4-dm-verity | squashfs | yocto-hpc |
-|-------|---------|------|----------------|----------|-----------|
-| D1 | Compiler flags (SSP, FORTIFY, RELRO, PIE) | ✅ | ✅ | ✅ | ✅ |
-| D2 | No debug-tweaks + hashed root password | ✅ | ✅ | ✅ | ✅ |
-| D3 | Read-only rootfs + overlayfs-etc | ✅ | ✅ | ✅ | ✅ |
-| D4 | CVE checking (NVD database) | ✅ | ✅ | ✅ | ✅ |
-| D5 | Custom hardened distro (poky-hardened) | ✅ | ✅ | ✅ | ✅ |
-| D6 | SELinux (refpolicy-targeted) | permissive | enforcing | permissive | permissive |
-| D7 | dm-verity kernel support | ✅ | ✅ | ✅ | ✅ |
-| D8 | dm-verity bootloader integration | 🔧 | 🔧 | ✅ | N/A |
-| D9 | IMA/EVM runtime file integrity | 🔲 | 🔲 | 🔲 | 🔲 |
-| D10 | Secure Boot | 🔲 | 🔲 | 🔲 | 🔲 |
+| Level | Measure | main | ext4-dm-verity | squashfs | yocto-hpc | arm64-ftrfs |
+|-------|---------|------|----------------|----------|-----------|-------------|
+| D1 | Compiler flags (SSP, FORTIFY, RELRO, PIE) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| D2 | No debug-tweaks + hashed root password | ✅ | ✅ | ✅ | ✅ | ✅ |
+| D3 | Read-only rootfs + overlayfs-etc | ✅ | ✅ | ✅ | ✅ | ✅ |
+| D4 | CVE checking (NVD database) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| D5 | Custom hardened distro (poky-hardened) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| D6 | SELinux (refpolicy-targeted) | permissive | enforcing | permissive | permissive | permissive |
+| D7 | dm-verity kernel support | ✅ | ✅ | ✅ | ✅ | ✅ |
+| D8 | dm-verity bootloader integration | 🔧 | 🔧 | ✅ | N/A | 🔧 |
+| D9 | FTRFS RS FEC on data partition | ❌ | ❌ | ❌ | ❌ | ✅ |
+| D10 | IMA/EVM runtime file integrity | 🔲 | 🔲 | 🔲 | 🔲 | 🔲 |
+| D11 | Secure Boot | 🔲 | 🔲 | 🔲 | 🔲 | 🔲 |
 
 ---
 
@@ -74,6 +95,7 @@ DISTRO = "poky-hardened"
 cp recipes-core/images/credentials.inc.example \
    recipes-core/images/credentials.inc
 # Generate hash: openssl passwd -6 "yourpassword"
+# Each $ must be escaped as \$ in the BitBake file
 ```
 
 ### Build
@@ -81,29 +103,15 @@ cp recipes-core/images/credentials.inc.example \
 ```bash
 source oe-init-build-env build-qemu-x86
 bitbake custom-image
-```
-
-### Run in QEMU
-
-```bash
-runqemu nographic slirp custom-image-qemux86-64.qemuboot.conf
+runqemu qemux86-64 nographic
 ```
 
 ---
 
-## Security Notes
+## License
 
-- `credentials.inc` is never versioned
-- Private SSH keys kept outside the repo
-- SELinux permissive on main (enforcing in ext4-dm-verity-selinux branch)
-- Read-only rootfs with overlayfs-etc on tmpfs
+MIT — see `LICENSE`.
 
----
+## Maintainer
 
-## Roadmap
-
-- D8: dm-verity bootloader integration (U-Boot root hash passing)
-- D9: IMA/EVM runtime file integrity
-- D10: Secure Boot
-- BeagleBone Black port (ext4-dm-verity-selinux and squashfs branches)
-- HPC cluster production deployment (see yocto-hpc branch)
+Aurelien DESBRIERES `<aurelien@hackers.camp>`
