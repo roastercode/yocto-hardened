@@ -14,6 +14,16 @@ This layer is the Yocto counterpart of the
 [FTRFS kernel filesystem](https://github.com/roastercode/FTRFS),
 an RFC submitted to linux-fsdevel in April 2026.
 
+### Milestone log
+
+| Date | Milestone |
+|------|-----------|
+| 2026-04-12 | RFC v3 submitted to linux-fsdevel |
+| 2026-04-17 | On-disk bitmap block with RS FEC implemented in mkfs and kernel |
+| 2026-04-17 | **FTRFS mounts cleanly on arm64 kernel 7.0 — zero RS errors** |
+| 2026-04-17 | RS parity in mkfs verified to match lib/reed_solomon exactly |
+| 2026-04-17 | Write/read/umount/rmmod validated on QEMU arm64 |
+
 ---
 
 ## What this layer provides
@@ -65,6 +75,32 @@ Full rationale:
 
 ---
 
+## What FTRFS v2 implements (this layer)
+
+The on-disk format v2 introduces a **bitmap block protected by RS FEC**:
+
+```
+Block 0      superblock (CRC32 verified)
+Block 1-4    inode table
+Block 5      bitmap block — RS(255,239) protected   ← NEW in v2
+Block 6      root directory data
+Block 7+     data blocks
+```
+
+The bitmap block stores the free-block allocation state in 16 subblocks
+of 239 data bytes each, followed by 16 bytes of Reed-Solomon parity
+computed with the same parameters as the kernel's `lib/reed_solomon`:
+`init_rs(8, 0x187, fcr=0, prim=1, nroots=16)`.
+
+At mount time, the kernel decodes each subblock. If a SEU has corrupted
+the bitmap, the kernel corrects it in place and logs the event to the
+Radiation Event Journal — the same mechanism used for data blocks.
+
+**No existing Linux filesystem applies RS FEC to its own allocation
+metadata.** FTRFS applies its own medicine to its own structures.
+
+---
+
 ## Validated configuration
 
 | Component    | Version                 |
@@ -79,6 +115,13 @@ Full rationale:
 
 Slurm cluster test: 3-node job dispatch validated, latency 0.336 s
 average, 9-job parallel batch 0.052 s per job.
+
+FTRFS mount test (arm64 QEMU, kernel 7.0):
+```
+ftrfs: bitmaps initialized (16377 data blocks, 16377 free; 64 inodes, 63 free)
+ftrfs: mounted (blocks=16384 free=16377 inodes=64)
+```
+Zero RS errors. Zero BUG/WARN/Oops.
 
 ---
 
@@ -99,8 +142,10 @@ git clone https://github.com/roastercode/yocto-hardened \
 cd meta-yocto-hardened-hpc/recipes-core/images
 cp credentials.inc.example credentials.inc
 
-# Generate a SHA-512 password hash and paste it into credentials.inc:
-openssl passwd -6 yourpassword
+# The example hash uses password "root" — suitable for QEMU lab only.
+# For production, generate your own:
+#   openssl passwd -6 yourpassword
+# Each $ must be escaped as \$ in the BitBake file.
 ```
 
 ### 3. Generate cluster secrets
@@ -153,10 +198,12 @@ bitbake hpc-arm64-compute
 
 ```sh
 # On each node after first boot:
-sudo modprobe ftrfs
-sudo dd if=/dev/zero of=/dev/vdb bs=4096 count=16384
-sudo mkfs.ftrfs /dev/vdb
-sudo mount -t ftrfs /dev/vdb /data
+modprobe loop
+dd if=/dev/zero of=/tmp/ftrfs.img bs=4096 count=16384
+mkfs.ftrfs /tmp/ftrfs.img
+losetup /dev/loop0 /tmp/ftrfs.img
+mount -t ftrfs /dev/loop0 /data
+# Verify: dmesg | grep ftrfs
 ```
 
 ---
@@ -164,8 +211,8 @@ sudo mount -t ftrfs /dev/vdb /data
 ## Files excluded from version control
 
 | File | How to generate |
-|------|-----------------|
-| `recipes-core/images/credentials.inc` | Copy `.example`, fill hash from `openssl passwd -6` |
+|------|-----------------| 
+| `recipes-core/images/credentials.inc` | Copy `.example`, optionally regenerate hash with `openssl passwd -6` |
 | `recipes-core/images/files/munge.key` | `dd if=/dev/urandom bs=1 count=1024 > munge.key` |
 | `recipes-core/images/files/hpclab_admin.pub` | `ssh-keygen -t ed25519 -f hpclab_admin` |
 
@@ -181,6 +228,7 @@ sudo mount -t ftrfs /dev/vdb /data
   and will be upstreamed or removed before meta-oe submission.
 - FTRFS rootfs support (indirect blocks, symlinks, xattr) is not yet
   implemented. FTRFS is currently a data partition filesystem only.
+- xfstests Yocto recipe: pending. Required before kernel.org resubmission.
 
 ---
 
