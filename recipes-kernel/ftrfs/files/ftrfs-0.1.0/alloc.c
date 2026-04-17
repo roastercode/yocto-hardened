@@ -34,11 +34,14 @@
  * ftrfs_setup_bitmap — allocate and initialize in-memory bitmaps
  *
  * Called from ftrfs_fill_super() after the superblock is read.
- * I/O is performed here (mount path), never under spinlock.
  *
- * Block bitmap: reconstructed from s_free_blocks counter (approximate).
+ * Block bitmap: loaded from the on-disk bitmap block (s_bitmap_blk).
+ * Each 239-byte subblock is RS(255,239) FEC-protected. If a subblock
+ * is corrected, the event is logged to the Radiation Event Journal and
+ * the corrected bitmap is written back immediately.
+ *
  * Inode bitmap: reconstructed by scanning the inode table for free slots
- *               (i_mode == 0). This is O(total_inodes) but only at mount.
+ * (i_mode == 0). This is O(total_inodes) but only at mount.
  */
 int ftrfs_setup_bitmap(struct super_block *sb)
 {
@@ -51,14 +54,23 @@ int ftrfs_setup_bitmap(struct super_block *sb)
 	unsigned long block, i;
 	struct buffer_head *bh;
 	struct ftrfs_inode *raw;
+	u64 bitmap_blk;
+	u8 *bdata;
+	bool corrected = false;
 
 	/* --- Block bitmap --- */
 	total_blocks = le64_to_cpu(sbi->s_ftrfs_sb->s_block_count);
 	data_start   = le64_to_cpu(sbi->s_ftrfs_sb->s_data_start_blk);
+	bitmap_blk   = le64_to_cpu(sbi->s_ftrfs_sb->s_bitmap_blk);
 
 	if (total_blocks <= data_start) {
 		pr_err("ftrfs: invalid block layout (total=%lu data_start=%lu)\n",
 		       total_blocks, data_start);
+		return -EINVAL;
+	}
+
+	if (bitmap_blk == 0 || bitmap_blk >= data_start) {
+		pr_err("ftrfs: invalid bitmap block %llu\n", bitmap_blk);
 		return -EINVAL;
 	}
 
@@ -69,42 +81,84 @@ int ftrfs_setup_bitmap(struct super_block *sb)
 	if (!sbi->s_block_bitmap)
 		return -ENOMEM;
 
-	/*
-	 * Mark all blocks as free, then mark the first (total - free) as used.
-	 * This assumes used blocks are contiguous from the start of the data
-	 * area, which is true for a freshly formatted filesystem. An on-disk
-	 * bitmap block (v4) will replace this approximation.
-	 */
-	bitmap_fill(sbi->s_block_bitmap, sbi->s_nblocks);
-	{
-		unsigned long used = sbi->s_nblocks - sbi->s_free_blocks;
-		unsigned long idx;
+	/* Read the on-disk bitmap block */
+	bh = sb_bread(sb, bitmap_blk);
+	if (!bh) {
+		pr_err("ftrfs: cannot read bitmap block %llu\n", bitmap_blk);
+		bitmap_free(sbi->s_block_bitmap);
+		sbi->s_block_bitmap = NULL;
+		return -EIO;
+	}
+	sbi->s_bitmap_blkh = bh;
+	bdata = (u8 *)bh->b_data;
 
-		for (idx = 0; idx < used && idx < sbi->s_nblocks; idx++)
-			clear_bit(idx, sbi->s_block_bitmap);
+	/*
+	 * Decode each RS(255,239) subblock. ftrfs_rs_decode() corrects up
+	 * to 8 symbol errors in place and returns the number of corrections
+	 * made (0 = clean, >0 = corrected, <0 = uncorrectable).
+	 */
+	for (i = 0; i < FTRFS_BITMAP_SUBBLOCKS; i++) {
+		u8 *subdata   = bdata + i * FTRFS_SUBBLOCK_TOTAL;
+		u8 *subparity = subdata + FTRFS_SUBBLOCK_DATA;
+		int rc;
+
+		rc = ftrfs_rs_decode(subdata, subparity);
+		if (rc < 0) {
+			pr_err("ftrfs: bitmap subblock %lu uncorrectable\n", i);
+		} else if (rc > 0) {
+			pr_warn("ftrfs: bitmap subblock %lu: %d symbol(s) corrected\n",
+				i, rc);
+			ftrfs_log_rs_event(sb,
+				(u64)bitmap_blk * FTRFS_BITMAP_SUBBLOCKS + i,
+				(u32)rc);
+			corrected = true;
+		}
+	}
+
+	/*
+	 * Copy bitmap data bytes into the in-memory bitmap.
+	 * Skip parity bytes between subblocks.
+	 */
+	{
+		unsigned long bit = 0;
+		unsigned long max_bit = sbi->s_nblocks;
+
+		for (i = 0; i < FTRFS_BITMAP_SUBBLOCKS && bit < max_bit; i++) {
+			u8 *subdata = bdata + i * FTRFS_SUBBLOCK_TOTAL;
+			unsigned long b;
+
+			for (b = 0; b < FTRFS_SUBBLOCK_DATA * 8 && bit < max_bit;
+			     b++, bit++) {
+				if (subdata[b / 8] & (1u << (b % 8)))
+					set_bit(bit, sbi->s_block_bitmap);
+				else
+					clear_bit(bit, sbi->s_block_bitmap);
+			}
+		}
+	}
+
+	/* Write back corrected bitmap immediately */
+	if (corrected) {
+		mark_buffer_dirty(bh);
+		sync_dirty_buffer(bh);
 	}
 
 	/* --- Inode bitmap --- */
-	total_inodes    = le64_to_cpu(sbi->s_ftrfs_sb->s_inode_count);
-	inode_table_blk = le64_to_cpu(sbi->s_ftrfs_sb->s_inode_table_blk);
+	total_inodes     = le64_to_cpu(sbi->s_ftrfs_sb->s_inode_count);
+	inode_table_blk  = le64_to_cpu(sbi->s_ftrfs_sb->s_inode_table_blk);
 	inodes_per_block = FTRFS_BLOCK_SIZE / sizeof(struct ftrfs_inode);
 
 	sbi->s_ninodes = total_inodes;
 
 	sbi->s_inode_bitmap = bitmap_zalloc(total_inodes + 1, GFP_KERNEL);
 	if (!sbi->s_inode_bitmap) {
+		brelse(sbi->s_bitmap_blkh);
+		sbi->s_bitmap_blkh = NULL;
 		bitmap_free(sbi->s_block_bitmap);
 		sbi->s_block_bitmap = NULL;
 		return -ENOMEM;
 	}
 
-	/*
-	 * Scan the inode table. For each slot:
-	 *   i_mode == 0  -> free  -> set bit
-	 *   i_mode != 0  -> used  -> leave bit clear
-	 * Inode numbers are 1-based; we use ino as the bit index directly.
-	 * Inode 0 is never valid; bit 0 is never set.
-	 */
 	for (block = 0; block * inodes_per_block < total_inodes; block++) {
 		bh = sb_bread(sb, inode_table_blk + block);
 		if (!bh) {
@@ -120,10 +174,8 @@ int ftrfs_setup_bitmap(struct super_block *sb)
 
 			if (ino > total_inodes)
 				break;
-			/* inode 1 = root, always used */
 			if (ino == 1)
 				continue;
-
 			if (le16_to_cpu(raw[i].i_mode) == 0)
 				set_bit(ino, sbi->s_inode_bitmap);
 		}
@@ -139,12 +191,59 @@ int ftrfs_setup_bitmap(struct super_block *sb)
 }
 
 /*
+ * ftrfs_write_bitmap — flush in-memory block bitmap to disk with RS FEC
+ *
+ * Encodes each 239-byte data subblock with 16 bytes of RS parity and
+ * marks the bitmap buffer dirty. Called under s_lock.
+ */
+int ftrfs_write_bitmap(struct super_block *sb)
+{
+	struct ftrfs_sb_info *sbi = FTRFS_SB(sb);
+	u8 *bdata;
+	unsigned long bit = 0;
+	unsigned long max_bit = sbi->s_nblocks;
+	unsigned long i, b;
+
+	if (!sbi->s_bitmap_blkh || !sbi->s_block_bitmap)
+		return -EINVAL;
+
+	bdata = (u8 *)sbi->s_bitmap_blkh->b_data;
+	memset(bdata, 0, FTRFS_BLOCK_SIZE);
+
+	/* Pack in-memory bitmap bits into subblock data areas */
+	for (i = 0; i < FTRFS_BITMAP_SUBBLOCKS && bit < max_bit; i++) {
+		u8 *subdata = bdata + i * FTRFS_SUBBLOCK_TOTAL;
+
+		for (b = 0; b < FTRFS_SUBBLOCK_DATA * 8 && bit < max_bit;
+		     b++, bit++) {
+			if (test_bit(bit, sbi->s_block_bitmap))
+				subdata[b / 8] |= (1u << (b % 8));
+		}
+	}
+
+	/* Re-encode RS parity for each subblock */
+	for (i = 0; i < FTRFS_BITMAP_SUBBLOCKS; i++) {
+		u8 *subdata   = bdata + i * FTRFS_SUBBLOCK_TOTAL;
+		u8 *subparity = subdata + FTRFS_SUBBLOCK_DATA;
+
+		ftrfs_rs_encode(subdata, subparity);
+	}
+
+	mark_buffer_dirty(sbi->s_bitmap_blkh);
+	return 0;
+}
+
+/*
  * ftrfs_destroy_bitmap — free in-memory bitmaps at umount
  */
 void ftrfs_destroy_bitmap(struct super_block *sb)
 {
 	struct ftrfs_sb_info *sbi = FTRFS_SB(sb);
 
+	if (sbi->s_bitmap_blkh) {
+		brelse(sbi->s_bitmap_blkh);
+		sbi->s_bitmap_blkh = NULL;
+	}
 	if (sbi->s_block_bitmap) {
 		bitmap_free(sbi->s_block_bitmap);
 		sbi->s_block_bitmap = NULL;
@@ -195,6 +294,7 @@ u64 ftrfs_alloc_block(struct super_block *sb)
 	sbi->s_free_blocks--;
 	sbi->s_ftrfs_sb->s_free_blocks = cpu_to_le64(sbi->s_free_blocks);
 	mark_buffer_dirty(sbi->s_sbh);
+	ftrfs_write_bitmap(sb);
 
 	spin_unlock(&sbi->s_lock);
 
@@ -232,6 +332,7 @@ void ftrfs_free_block(struct super_block *sb, u64 block)
 	sbi->s_free_blocks++;
 	sbi->s_ftrfs_sb->s_free_blocks = cpu_to_le64(sbi->s_free_blocks);
 	mark_buffer_dirty(sbi->s_sbh);
+	ftrfs_write_bitmap(sb);
 
 	spin_unlock(&sbi->s_lock);
 }

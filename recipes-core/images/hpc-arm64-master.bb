@@ -21,9 +21,6 @@ IMAGE_LINK_NAME = "hpc-arm64-master-${MACHINE}"
 inherit core-image dm-verity-image
 
 require recipes-core/images/hpc-config.inc
-
-# credentials.inc is site-local and not tracked in git.
-# Copy credentials.inc.example to credentials.inc before building.
 require recipes-core/images/credentials.inc
 
 IMAGE_FEATURES:remove = "debug-tweaks"
@@ -134,6 +131,7 @@ ${HPC_COMPUTE03_IP} ${HPC_COMPUTE03_HOSTNAME}
 HOSTSEOF
     ln -sf /etc/slurm/slurm.conf ${IMAGE_ROOTFS}/etc/slurm.conf 2>/dev/null || true
 }
+
 
 # Generate slurm.conf from template + hpc-config.inc variables
 ROOTFS_POSTPROCESS_COMMAND:append = " setup_slurm_conf;"

@@ -6,8 +6,10 @@
  *
  * Layout:
  *   Block 0    : superblock
- *   Block 1    : inode table (start)
- *   Block 1+N  : data blocks
+ *   Block 1..N : inode table
+ *   Block N+1  : bitmap block (RS FEC protected)
+ *   Block N+2  : root directory data
+ *   Block N+3+ : data blocks
  */
 
 #include <stdio.h>
@@ -26,6 +28,13 @@
 #define FTRFS_BLOCK_SIZE    4096
 #define FTRFS_MAX_FILENAME  255
 #define FTRFS_DIRECT_BLOCKS 12
+
+/* RS FEC constants (must match kernel ftrfs.h) */
+#define FTRFS_RS_PARITY        16
+#define FTRFS_SUBBLOCK_DATA    239
+#define FTRFS_SUBBLOCK_TOTAL   255
+#define FTRFS_BITMAP_SUBBLOCKS 16
+#define FTRFS_BITMAP_DATA_BYTES (FTRFS_BITMAP_SUBBLOCKS * FTRFS_SUBBLOCK_DATA)
 
 /* Minimal CRC32 for userspace mkfs */
 static uint32_t crc32_table[256];
@@ -88,7 +97,8 @@ struct ftrfs_super_block {
 	uint8_t  s_label[32];
 	struct ftrfs_rs_event s_rs_journal[FTRFS_RS_JOURNAL_SIZE]; /* 1536 bytes */
 	uint8_t  s_rs_journal_head;
-	uint8_t  s_pad[2443];        /* padding to 4096 bytes */
+	uint64_t s_bitmap_blk;       /* on-disk block bitmap block number */
+	uint8_t  s_pad[2435];        /* padding to 4096 bytes */
 } __attribute__((packed));
 
 /*
@@ -103,6 +113,66 @@ static uint32_t crc32_sb(const struct ftrfs_super_block *sb)
 	c = crc32_internal(0xFFFFFFFF, base, 64);
 	c = crc32_internal(c, base + 68, 1653 - 68);
 	return c ^ 0xFFFFFFFF;
+}
+
+
+/*
+ * rs_encode_bitmap — protect 239-byte subblocks with 16-byte RS parity.
+ *
+ * Userspace-only implementation for mkfs. The kernel uses lib/reed_solomon
+ * (encode_rs8/decode_rs8). Both use GF(2^8) with primitive polynomial 0x187.
+ *
+ * Layout in the 4096-byte bitmap block:
+ *   [data0..238][par0..15][data239..477][par..] ...  (16 subblocks)
+ */
+static void rs_encode_bitmap(uint8_t *block)
+{
+	unsigned int poly = 0x187;
+	uint8_t gf_log[256], gf_exp[512];
+	unsigned int x = 1;
+	int i, j, k;
+
+	for (i = 0; i < 255; i++) {
+		gf_exp[i] = (uint8_t)x;
+		gf_log[x] = (uint8_t)i;
+		x <<= 1;
+		if (x & 0x100)
+			x ^= poly;
+	}
+	for (i = 255; i < 512; i++)
+		gf_exp[i] = gf_exp[i - 255];
+	gf_log[0] = 0;
+	gf_exp[0] = 1;
+
+	uint8_t gen[17];
+	memset(gen, 0, sizeof(gen));
+	gen[0] = 1;
+	for (i = 1; i <= 16; i++) {
+		uint8_t root = gf_exp[i];
+		for (j = i; j > 0; j--) {
+			if (gen[j - 1])
+				gen[j] ^= gf_exp[(gf_log[gen[j-1]] + gf_log[root]) % 255];
+		}
+	}
+
+	for (k = 0; k < FTRFS_BITMAP_SUBBLOCKS; k++) {
+		uint8_t *data   = block + k * FTRFS_SUBBLOCK_TOTAL;
+		uint8_t *parity = data + FTRFS_SUBBLOCK_DATA;
+		uint8_t feedback;
+
+		memset(parity, 0, FTRFS_RS_PARITY);
+		for (i = 0; i < FTRFS_SUBBLOCK_DATA; i++) {
+			feedback = data[i] ^ parity[0];
+			for (j = 0; j < FTRFS_RS_PARITY - 1; j++) {
+				parity[j] = parity[j + 1];
+				if (feedback && gen[j + 1])
+					parity[j] ^= gf_exp[(gf_log[feedback] + gf_log[gen[j+1]]) % 255];
+			}
+			parity[FTRFS_RS_PARITY - 1] = 0;
+			if (feedback && gen[0])
+				parity[FTRFS_RS_PARITY - 1] ^= gf_exp[(gf_log[feedback] + gf_log[gen[0]]) % 255];
+		}
+	}
 }
 
 struct ftrfs_inode {
@@ -176,15 +246,17 @@ int main(int argc, char *argv[])
 	/* Layout:
 	 * Block 0      : superblock
 	 * Block 1-4    : inode table (4 blocks = 64 inodes @ 256B each)
-	 * Block 5      : root dir data
-	 * Block 6+     : free data blocks
+	 * Block 5      : bitmap block (RS FEC protected)
+	 * Block 6      : root dir data
+	 * Block 7+     : free data blocks
 	 */
 	uint64_t inode_table_blk = 1;
 	uint64_t inode_table_len = 4;
-	uint64_t data_start_blk  = inode_table_blk + inode_table_len + 1;
+	uint64_t bitmap_blk      = inode_table_blk + inode_table_len;
+	uint64_t data_start_blk  = bitmap_blk + 2;
 	uint64_t inodes_per_block = FTRFS_BLOCK_SIZE / sizeof(struct ftrfs_inode);
 	uint64_t total_inodes    = inode_table_len * inodes_per_block;
-	uint64_t root_dir_blk    = inode_table_blk + inode_table_len;
+	uint64_t root_dir_blk    = bitmap_blk + 1;
 
 	uint8_t zero[FTRFS_BLOCK_SIZE];
 	memset(zero, 0, sizeof(zero));
@@ -192,6 +264,18 @@ int main(int argc, char *argv[])
 	/* Zero inode table blocks */
 	for (uint64_t i = 0; i < inode_table_len; i++)
 		write_block(fd, inode_table_blk + i, zero);
+
+	/*
+	 * Write bitmap block — all bits set (= all blocks free).
+	 * 16 subblocks of 239 data bytes each, each followed by 16 bytes
+	 * of RS(255,239) parity. Total: 16 * 255 = 4080 bytes, 16 unused.
+	 */
+	uint8_t bitmap_block[FTRFS_BLOCK_SIZE];
+	memset(bitmap_block, 0, sizeof(bitmap_block));
+	for (int s = 0; s < FTRFS_BITMAP_SUBBLOCKS; s++)
+		memset(bitmap_block + s * FTRFS_SUBBLOCK_TOTAL, 0xFF, FTRFS_SUBBLOCK_DATA);
+	rs_encode_bitmap(bitmap_block);
+	write_block(fd, bitmap_blk, bitmap_block);
 
 	/* Write root directory data block (empty dir, just . and ..) */
 	uint8_t dir_block[FTRFS_BLOCK_SIZE];
@@ -243,7 +327,8 @@ int main(int argc, char *argv[])
 	sb.s_free_inodes    = total_inodes - 1; /* root inode used */
 	sb.s_inode_table_blk = inode_table_blk;
 	sb.s_data_start_blk  = data_start_blk;
-	sb.s_version        = 1;
+	sb.s_version        = 2; /* v2: on-disk bitmap with RS FEC */
+	sb.s_bitmap_blk     = bitmap_blk;
 	sb.s_crc32          = crc32_sb(&sb);
 
 	write_block(fd, 0, &sb);
@@ -257,6 +342,7 @@ int main(int argc, char *argv[])
 	       (unsigned long)total_inodes,
 	       (unsigned long)sb.s_free_inodes);
 	printf("  inode table: block %lu\n", (unsigned long)inode_table_blk);
+	printf("  bitmap:      block %lu (RS FEC protected)\n", (unsigned long)bitmap_blk);
 	printf("  data start:  block %lu\n", (unsigned long)data_start_blk);
 	return 0;
 }

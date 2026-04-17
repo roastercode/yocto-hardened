@@ -31,6 +31,11 @@
 #define FTRFS_SUBBLOCK_DATA 239
 #define FTRFS_SUBBLOCK_TOTAL (FTRFS_SUBBLOCK_DATA + FTRFS_RS_PARITY)
 
+/* On-disk bitmap block layout (RS FEC protected) */
+#define FTRFS_BITMAP_SUBBLOCKS  16   /* subblocks per bitmap block */
+#define FTRFS_BITMAP_DATA_BYTES (FTRFS_BITMAP_SUBBLOCKS * FTRFS_SUBBLOCK_DATA) /* 3824 */
+#define FTRFS_BITMAP_MAX_BLOCKS (FTRFS_BITMAP_DATA_BYTES * 8) /* 30592 */
+
 /* Filesystem limits */
 #define FTRFS_MAX_FILENAME  255
 #define FTRFS_DIRECT_BLOCKS 12
@@ -72,7 +77,8 @@ struct ftrfs_super_block {
 	__u8    s_label[32];        /* Volume label */
 	 struct ftrfs_rs_event s_rs_journal[FTRFS_RS_JOURNAL_SIZE]; /* 1536 bytes */
 	__u8    s_rs_journal_head;  /* next write index (ring buffer) */
-	__u8    s_pad[2443];        /* Padding to 4096 bytes */
+	__le64  s_bitmap_blk;       /* On-disk block bitmap block number */
+	__u8    s_pad[2435];        /* Padding to 4096 bytes */
 } __packed;
 
 /*
@@ -135,6 +141,7 @@ struct ftrfs_sb_info {
 	/* Superblock */
 	struct ftrfs_super_block *s_ftrfs_sb; /* On-disk superblock copy */
 	struct buffer_head       *s_sbh;      /* Buffer head for superblock */
+	struct buffer_head       *s_bitmap_blkh; /* Buffer head for on-disk bitmap */
 	spinlock_t                s_lock;     /* Superblock lock */
 	unsigned long             s_free_blocks;
 	unsigned long             s_free_inodes;
@@ -190,6 +197,7 @@ int ftrfs_rs_decode(u8 *data, u8 *parity);
 
 /* alloc.c */
 int  ftrfs_setup_bitmap(struct super_block *sb);
+int  ftrfs_write_bitmap(struct super_block *sb);
 void ftrfs_destroy_bitmap(struct super_block *sb);
 u64  ftrfs_alloc_block(struct super_block *sb);
 void ftrfs_free_block(struct super_block *sb, u64 block);
