@@ -93,7 +93,7 @@ preseed_ssh_keys() {
 # Create admin user and install SSH public key if provided
 ROOTFS_POSTPROCESS_COMMAND:append = " setup_hpcadmin;"
 setup_hpcadmin() {
-    useradd -R ${IMAGE_ROOTFS} -m -s /bin/bash -G sudo ${HPC_ADMIN_USER} 2>/dev/null || true
+    useradd -R ${IMAGE_ROOTFS} -m -s /bin/sh -G sudo ${HPC_ADMIN_USER} 2>/dev/null || true
     mkdir -p ${IMAGE_ROOTFS}/home/${HPC_ADMIN_USER}/.ssh
     chmod 700 ${IMAGE_ROOTFS}/home/${HPC_ADMIN_USER}/.ssh
     if [ -n "${HPC_ADMIN_PUBKEY_FILE}" ] && [ -f "${HPC_ADMIN_PUBKEY_FILE}" ]; then

@@ -39,10 +39,10 @@ HPC_ADMIN_USER ?= "hpcadmin"
 # Set this to the path of your public key file, or leave empty to skip.
 # Example:
 #   HPC_ADMIN_PUBKEY_FILE = "${LAYERDIR}/files/my_admin_key.pub"
-HPC_ADMIN_PUBKEY_FILE ?= ""
+HPC_ADMIN_PUBKEY_FILE ?= "${THISDIR}/files/hpclab_admin.pub"
 
 # Munge key file path.
 # Generate with: dd if=/dev/urandom bs=1 count=1024 > munge.key
 # Then set:
 #   HPC_MUNGE_KEY_FILE = "${LAYERDIR}/files/munge.key"
-HPC_MUNGE_KEY_FILE ?= ""
+HPC_MUNGE_KEY_FILE ?= "${THISDIR}/files/munge.key"
