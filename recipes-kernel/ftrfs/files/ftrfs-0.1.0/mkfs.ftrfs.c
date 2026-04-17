@@ -119,59 +119,80 @@ static uint32_t crc32_sb(const struct ftrfs_super_block *sb)
 /*
  * rs_encode_bitmap — protect 239-byte subblocks with 16-byte RS parity.
  *
- * Userspace-only implementation for mkfs. The kernel uses lib/reed_solomon
- * (encode_rs8/decode_rs8). Both use GF(2^8) with primitive polynomial 0x187.
+ * Exact reproduction of lib/reed_solomon encode_rs8() with parameters:
+ *   init_rs(8, 0x187, fcr=0, prim=1, nroots=16)
  *
- * Layout in the 4096-byte bitmap block:
- *   [data0..238][par0..15][data239..477][par..] ...  (16 subblocks)
+ * Uses index-form genpoly exactly as codec_init() builds it, and
+ * the same LFSR feedback loop as encode_rs.c.
+ *
+ * Layout: [data0..238][par0..15][data239..477][par..] (16 subblocks)
  */
 static void rs_encode_bitmap(uint8_t *block)
 {
-	unsigned int poly = 0x187;
-	uint8_t gf_log[256], gf_exp[512];
-	unsigned int x = 1;
-	int i, j, k;
+	/* GF(2^8) with primitive polynomial 0x187 */
+	static const int nn = 255;
+	uint16_t alpha_to[256], index_of[256];
+	uint16_t genpoly[17]; /* index form, nroots+1 elements */
+	int sr, i, j, root;
 
-	for (i = 0; i < 255; i++) {
-		gf_exp[i] = (uint8_t)x;
-		gf_log[x] = (uint8_t)i;
-		x <<= 1;
-		if (x & 0x100)
-			x ^= poly;
+	/* Build GF tables */
+	sr = 1;
+	for (i = 0; i < nn; i++) {
+		index_of[sr] = i;
+		alpha_to[i]  = sr;
+		sr <<= 1;
+		if (sr & 256)
+			sr ^= 0x187;
+		sr &= nn;
 	}
-	for (i = 255; i < 512; i++)
-		gf_exp[i] = gf_exp[i - 255];
-	gf_log[0] = 0;
-	gf_exp[0] = 1;
+	alpha_to[nn] = 0;
+	index_of[0]  = nn;
 
-	uint8_t gen[17];
-	memset(gen, 0, sizeof(gen));
-	gen[0] = 1;
-	for (i = 1; i <= 16; i++) {
-		uint8_t root = gf_exp[i];
+	/* Build generator polynomial in index form — exactly codec_init() */
+	/* fcr=0, prim=1: roots are alpha^0 .. alpha^15 */
+	uint16_t gp[17];
+	memset(gp, 0, sizeof(gp));
+	gp[0] = 1;
+	root = 0; /* fcr * prim */
+	for (i = 0; i < 16; i++) {
+		gp[i + 1] = 1;
 		for (j = i; j > 0; j--) {
-			if (gen[j - 1])
-				gen[j] ^= gf_exp[(gf_log[gen[j-1]] + gf_log[root]) % 255];
-		}
-	}
-
-	for (k = 0; k < FTRFS_BITMAP_SUBBLOCKS; k++) {
-		uint8_t *data   = block + k * FTRFS_SUBBLOCK_TOTAL;
-		uint8_t *parity = data + FTRFS_SUBBLOCK_DATA;
-		uint8_t feedback;
-
-		memset(parity, 0, FTRFS_RS_PARITY);
-		for (i = 0; i < FTRFS_SUBBLOCK_DATA; i++) {
-			feedback = data[i] ^ parity[0];
-			for (j = 0; j < FTRFS_RS_PARITY - 1; j++) {
-				parity[j] = parity[j + 1];
-				if (feedback && gen[j + 1])
-					parity[j] ^= gf_exp[(gf_log[feedback] + gf_log[gen[j+1]]) % 255];
+			if (gp[j] != 0) {
+				int idx = (index_of[gp[j]] + root) % nn;
+				gp[j] = gp[j - 1] ^ alpha_to[idx];
+			} else {
+				gp[j] = gp[j - 1];
 			}
-			parity[FTRFS_RS_PARITY - 1] = 0;
-			if (feedback && gen[0])
-				parity[FTRFS_RS_PARITY - 1] ^= gf_exp[(gf_log[feedback] + gf_log[gen[0]]) % 255];
 		}
+		gp[0] = alpha_to[(index_of[gp[0]] + root) % nn];
+		root += 1; /* += prim */
+	}
+	/* Convert to index form */
+	for (i = 0; i <= 16; i++)
+		genpoly[i] = index_of[gp[i]];
+
+	/* Encode each subblock — exactly encode_rs.c LFSR */
+	for (int k = 0; k < FTRFS_BITMAP_SUBBLOCKS; k++) {
+		uint8_t  *data   = block + k * FTRFS_SUBBLOCK_TOTAL;
+		uint16_t  par[16];
+		memset(par, 0, sizeof(par));
+
+		for (i = 0; i < FTRFS_SUBBLOCK_DATA; i++) {
+			uint16_t fb = index_of[(data[i] ^ (uint8_t)par[0]) & nn];
+			if (fb != (uint16_t)nn) {
+				for (j = 1; j < 16; j++)
+					par[j] ^= alpha_to[(fb + genpoly[16 - j]) % nn];
+			}
+			memmove(&par[0], &par[1], sizeof(uint16_t) * 15);
+			par[15] = (fb != (uint16_t)nn)
+				? alpha_to[(fb + genpoly[0]) % nn]
+				: 0;
+		}
+
+		/* Write parity bytes after data */
+		uint8_t *parity = data + FTRFS_SUBBLOCK_DATA;
+		for (j = 0; j < 16; j++)
+			parity[j] = (uint8_t)par[j];
 	}
 }
 
