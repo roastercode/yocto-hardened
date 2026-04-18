@@ -13,3 +13,4 @@ recipes-core/images/files/*.pem
 # Yocto build artifacts
 *.pyc
 __pycache__/
+CONTEXT*.md
