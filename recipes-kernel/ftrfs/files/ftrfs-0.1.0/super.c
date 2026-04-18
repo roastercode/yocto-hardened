@@ -85,17 +85,62 @@ static void ftrfs_put_super(struct super_block *sb)
  * evict_inode — called when inode nlink drops to 0 and last reference released
  * Frees the inode number back to the bitmap.
  */
+/*
+ * ftrfs_free_data_blocks -- release all data blocks of a deleted inode.
+ *
+ * Frees direct blocks and the single indirect block (and all blocks
+ * it points to). Called from evict_inode when nlink drops to 0.
+ */
+static void ftrfs_free_data_blocks(struct inode *inode)
+{
+	struct ftrfs_inode_info *fi = FTRFS_I(inode);
+	struct super_block      *sb = inode->i_sb;
+	int i;
+
+	/* Free direct blocks */
+	for (i = 0; i < FTRFS_DIRECT_BLOCKS; i++) {
+		u64 blk = le64_to_cpu(fi->i_direct[i]);
+
+		if (blk) {
+			ftrfs_free_block(sb, blk);
+			fi->i_direct[i] = 0;
+		}
+	}
+
+	/* Free single indirect block and all blocks it points to */
+	if (fi->i_indirect) {
+		u64 indirect_blk = le64_to_cpu(fi->i_indirect);
+		struct buffer_head *ibh = sb_bread(sb, indirect_blk);
+
+		if (ibh) {
+			__le64 *ptrs = (__le64 *)ibh->b_data;
+			u64 nptrs = FTRFS_BLOCK_SIZE / sizeof(__le64);
+			u64 j;
+
+			for (j = 0; j < nptrs; j++) {
+				u64 blk = le64_to_cpu(ptrs[j]);
+
+				if (blk)
+					ftrfs_free_block(sb, blk);
+			}
+			brelse(ibh);
+		}
+		ftrfs_free_block(sb, indirect_blk);
+		fi->i_indirect = 0;
+	}
+}
+
 static void ftrfs_evict_inode(struct inode *inode)
 {
 	truncate_inode_pages_final(&inode->i_data);
 	/*
-	 * If the file is truly deleted (nlink == 0), zero i_mode on disk
-	 * before clear_inode() so that the inode table scan at next mount
-	 * correctly identifies this slot as free (i_mode == 0).
-	 * Without this, the inode bitmap diverges from the inode table
-	 * after unlink, causing "free_inodes=N but no free bit" at alloc.
+	 * If the file is truly deleted (nlink == 0), free all data blocks,
+	 * zero i_mode on disk so the inode table scan at next mount
+	 * correctly identifies this slot as free, then release the inode
+	 * number back to the bitmap.
 	 */
 	if (!inode->i_nlink) {
+		ftrfs_free_data_blocks(inode);
 		inode->i_mode = 0;
 		ftrfs_write_inode_raw(inode);
 		ftrfs_free_inode_num(inode->i_sb, (u64)inode->i_ino);
