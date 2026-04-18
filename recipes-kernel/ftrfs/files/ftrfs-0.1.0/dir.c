@@ -80,15 +80,16 @@ static int ftrfs_readdir(struct file *file, struct dir_context *ctx)
 			    !(de->d_name_len == 1 && de->d_name[0] == '.') &&
 			    !(de->d_name_len == 2 && de->d_name[0] == '.' &&
 			      de->d_name[1] == '.')) {
+				/*
+				 * Update ctx->pos before dir_emit so the VFS
+				 * has a unique seek offset for each entry.
+				 * Encode as ((block_idx+1) << 16) | entry_slot.
+				 */
+				ctx->pos = ((loff_t)(block_idx + 1) << 16)
+					   | entry_slot;
 				if (!dir_emit(ctx, de->d_name, de->d_name_len,
 					      le64_to_cpu(de->d_ino),
 					      de->d_file_type)) {
-					/*
-					 * Buffer full — encode current position
-					 * so next call resumes here.
-					 */
-					ctx->pos = ((loff_t)(block_idx + 1) << 16)
-						   | entry_slot;
 					brelse(bh);
 					return 0;
 				}

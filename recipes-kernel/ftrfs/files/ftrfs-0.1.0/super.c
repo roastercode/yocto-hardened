@@ -88,11 +88,19 @@ static void ftrfs_put_super(struct super_block *sb)
 static void ftrfs_evict_inode(struct inode *inode)
 {
 	truncate_inode_pages_final(&inode->i_data);
-	clear_inode(inode);
-
-	/* Only free the inode number if the file has been truly deleted */
-	if (!inode->i_nlink)
+	/*
+	 * If the file is truly deleted (nlink == 0), zero i_mode on disk
+	 * before clear_inode() so that the inode table scan at next mount
+	 * correctly identifies this slot as free (i_mode == 0).
+	 * Without this, the inode bitmap diverges from the inode table
+	 * after unlink, causing "free_inodes=N but no free bit" at alloc.
+	 */
+	if (!inode->i_nlink) {
+		inode->i_mode = 0;
+		ftrfs_write_inode_raw(inode);
 		ftrfs_free_inode_num(inode->i_sb, (u64)inode->i_ino);
+	}
+	clear_inode(inode);
 }
 
 static const struct super_operations ftrfs_super_ops = {
@@ -271,8 +279,21 @@ static int ftrfs_get_tree(struct fs_context *fc)
 	return get_tree_bdev(fc, ftrfs_fill_super);
 }
 
+/*
+ * ftrfs_reconfigure — handle mount -o remount
+ *
+ * xfstests calls remount,ro after each test to verify filesystem
+ * integrity. FTRFS accepts the reconfigure request without
+ * taking any action — ro/rw transitions are handled by the VFS.
+ */
+static int ftrfs_reconfigure(struct fs_context *fc)
+{
+	return 0;
+}
+
 static const struct fs_context_operations ftrfs_context_ops = {
-	.get_tree = ftrfs_get_tree,
+	.get_tree   = ftrfs_get_tree,
+	.reconfigure = ftrfs_reconfigure,
 };
 
 static int ftrfs_init_fs_context(struct fs_context *fc)

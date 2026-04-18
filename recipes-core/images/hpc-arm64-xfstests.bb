@@ -46,6 +46,8 @@ IMAGE_INSTALL = " \
     bash \
     bc \
     coreutils \
+    grep \
+    inetutils-hostname \
     e2fsprogs \
     e2fsprogs-tune2fs \
     util-linux \
@@ -76,8 +78,34 @@ export TEST_DEV=/dev/loop0
 export TEST_DIR=/mnt/test
 export SCRATCH_DEV=/dev/loop1
 export SCRATCH_MNT=/mnt/scratch
+export TMPDIR=/tmp
+export RESULT_BASE=/usr/xfstests/results
+export MKFS_OPTIONS="-N 256"
 LOCALEOF
     mkdir -p ${IMAGE_ROOTFS}/mnt/test
+
+    # hostname -s wrapper — BusyBox does not support -s flag
+    mv ${IMAGE_ROOTFS}/bin/hostname ${IMAGE_ROOTFS}/bin/hostname.busybox
+    cat > ${IMAGE_ROOTFS}/bin/hostname << 'HOSTNEOF'
+#!/bin/sh
+if [ "$1" = "-s" ]; then
+    /bin/hostname.busybox | cut -d. -f1
+else
+    /bin/hostname.busybox "$@"
+fi
+HOSTNEOF
+    chmod 755 ${IMAGE_ROOTFS}/bin/hostname
+
+    # grep wrapper — BusyBox does not support -1 (context lines)
+    mv ${IMAGE_ROOTFS}/bin/grep ${IMAGE_ROOTFS}/bin/grep.busybox
+    cat > ${IMAGE_ROOTFS}/bin/grep << 'GREPEOF'
+#!/bin/sh
+exec /bin/grep.busybox "$@"
+GREPEOF
+    chmod 755 ${IMAGE_ROOTFS}/bin/grep
+
+    # local.config — images on rootfs to avoid /tmp space issues
+    sed -i "s|export TMPDIR=/tmp||" ${IMAGE_ROOTFS}/usr/xfstests/local.config
     mkdir -p ${IMAGE_ROOTFS}/usr/xfstests/results
     mkdir -p ${IMAGE_ROOTFS}/mnt/scratch
     # fsgqa user is created by xfstests USERADD_PARAM

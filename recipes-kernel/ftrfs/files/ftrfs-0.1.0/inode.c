@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * FTRFS — Inode operations
- * Author: Aurelien DESBRIERES <aurelien@hackers.camp>
+ * Author: roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
  */
 
 #include <linux/fs.h>
@@ -50,59 +50,13 @@ struct inode *ftrfs_iget(struct super_block *sb, unsigned long ino)
 	}
 
 	raw = (struct ftrfs_inode *)bh->b_data + offset;
-
-	/*
-	 * RS FEC decode pass: if parity bytes are present in i_reserved[0..15],
-	 * attempt to correct any bit errors in the inode metadata before
-	 * verifying the CRC32. This handles single-event upsets in MRAM/NOR.
-	 * Correction is applied in-place on the buffer_head.
-	 */
-	{
-		static const __u8 zero_par[FTRFS_INODE_RS_PAR];
-
-		if (memcmp(raw->i_reserved, zero_par, FTRFS_INODE_RS_PAR) != 0) {
-			u8 rs_buf[FTRFS_SUBBLOCK_DATA];
-			u8 parity[FTRFS_INODE_RS_PAR];
-
-			memset(rs_buf, 0, sizeof(rs_buf));
-			memcpy(rs_buf, raw, FTRFS_INODE_RS_DATA);
-			memcpy(parity, raw->i_reserved, FTRFS_INODE_RS_PAR);
-
-			if (ftrfs_rs_decode(rs_buf, parity) < 0) {
-				pr_err("ftrfs: inode %lu RS uncorrectable\n", ino);
-				brelse(bh);
-				iget_failed(inode);
-				return ERR_PTR(-EIO);
-			}
-			/* Write corrected data back to buffer_head */
-			memcpy(raw, rs_buf, FTRFS_INODE_RS_DATA);
-			mark_buffer_dirty(bh);
-		}
-	}
-
-	/* Verify inode CRC32 (covers metadata + RS parity) */
+	/* Verify inode CRC32 */
 	crc = ftrfs_crc32(raw, offsetof(struct ftrfs_inode, i_crc32));
 	if (crc != le32_to_cpu(raw->i_crc32)) {
 		pr_err("ftrfs: inode %lu CRC32 mismatch\n", ino);
 		brelse(bh);
 		iget_failed(inode);
 		return ERR_PTR(-EIO);
-	}
-
-	/*
-	 * Verify i_reserved[16..83] is zeroed (anti-slack, DFRWS 2025).
-	 * i_reserved[0..15] contains RS parity and may be non-zero.
-	 */
-	{
-		static const __u8 zero[84 - FTRFS_INODE_RS_PAR];
-
-		if (memcmp(raw->i_reserved + FTRFS_INODE_RS_PAR, zero,
-			   sizeof(raw->i_reserved) - FTRFS_INODE_RS_PAR)) {
-			pr_err("ftrfs: inode %lu reserved tail non-zero\n", ino);
-			brelse(bh);
-			iget_failed(inode);
-			return ERR_PTR(-EIO);
-		}
 	}
 
 	fi = FTRFS_I(inode);
