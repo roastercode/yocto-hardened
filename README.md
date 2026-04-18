@@ -20,9 +20,17 @@ an RFC submitted to linux-fsdevel in April 2026.
 |------|-----------|
 | 2026-04-12 | RFC v3 submitted to linux-fsdevel |
 | 2026-04-17 | On-disk bitmap block with RS FEC implemented in mkfs and kernel |
-| 2026-04-17 | **FTRFS mounts cleanly on arm64 kernel 7.0 — zero RS errors** |
-| 2026-04-17 | RS parity in mkfs verified to match lib/reed_solomon exactly |
+| 2026-04-17 | FTRFS mounts cleanly on arm64 kernel 7.0 — zero RS errors |
+| 2026-04-17 | RS parity in mkfs verified to match lib/reed_solomon byte-for-byte |
 | 2026-04-17 | Write/read/umount/rmmod validated on QEMU arm64 |
+| 2026-04-17 | xfstests Yocto recipe added (hpc-arm64-xfstests image) |
+| 2026-04-18 | inode bitmap consistency fixed (bitmap_weight at mount) |
+| 2026-04-18 | evict_inode: zero i_mode on disk before clear_inode() |
+| 2026-04-18 | ftrfs_reconfigure() stub for mount -o remount support |
+| 2026-04-18 | migrate_folio added to ftrfs_aops (fixes kernel WARNING) |
+| 2026-04-18 | readdir d_off uniqueness fixed (generic/257 PASS) |
+| 2026-04-18 | mkfs.ftrfs -N option, default 256 inodes |
+| 2026-04-18 | xfstests generic/002, generic/257 PASS — 0 BUG/WARN in dmesg |
 
 ---
 
@@ -44,6 +52,9 @@ an RFC submitted to linux-fsdevel in April 2026.
 - **Reference HPC cluster images** — 1 master/login node + N compute nodes,
   buildable from scratch with a single `bitbake` invocation
 
+- **xfstests image** — dedicated test image (`hpc-arm64-xfstests`) with
+  GNU grep, GNU hostname, xfstests, mkfs.ftrfs -N 256, fsck.ftrfs stub
+
 ---
 
 ## Storage architecture
@@ -60,175 +71,120 @@ different partition types and different failure modes:
              SEU on rootfs → I/O error, reboot from verified image
 
 /data        FTRFS (read-write)
-             mission data, application state
-             SEU on data → in-place RS correction, event logged
+             SEU on data → in-place RS correction, event logged to
+             Radiation Event Journal in superblock
 
 /var/log     FTRFS (read-write)
-             system logs, radiation event history
 ```
-
-dm-verity detects and rejects corruption on read-only volumes.
-FTRFS detects and corrects corruption on read-write volumes.
-
-Full rationale:
-[Documentation/system-architecture.md](https://github.com/roastercode/FTRFS/blob/main/Documentation/system-architecture.md)
 
 ---
 
-## What FTRFS v2 implements (this layer)
-
-The on-disk format v2 introduces a **bitmap block protected by RS FEC**:
+## On-disk layout (v2)
 
 ```
-Block 0      superblock (CRC32 verified)
-Block 1-4    inode table
-Block 5      bitmap block — RS(255,239) protected   ← NEW in v2
-Block 6      root directory data
-Block 7+     data blocks
+Block 0        superblock (magic 0x46545246, CRC32 verified)
+Block 1..N     inode table (256 bytes/inode, configurable via mkfs -N)
+Block N+1      bitmap block (RS FEC protected)
+Block N+2      root directory data
+Block N+3..    data blocks
 ```
 
-The bitmap block stores the free-block allocation state in 16 subblocks
-of 239 data bytes each, followed by 16 bytes of Reed-Solomon parity
-computed with the same parameters as the kernel's `lib/reed_solomon`:
-`init_rs(8, 0x187, fcr=0, prim=1, nroots=16)`.
-
-At mount time, the kernel decodes each subblock. If a SEU has corrupted
-the bitmap, the kernel corrects it in place and logs the event to the
-Radiation Event Journal — the same mechanism used for data blocks.
-
-**No existing Linux filesystem applies RS FEC to its own allocation
-metadata.** FTRFS applies its own medicine to its own structures.
+Default: `mkfs.ftrfs -N 256` → 16 inode table blocks, bitmap at block 17,
+data start at block 19.
 
 ---
 
-## Validated configuration
+## xfstests results (2026-04-18, arm64 kernel 7.0)
 
-| Component    | Version                 |
-|--------------|-------------------------|
-| Yocto        | Styhead 5.1             |
-| Kernel       | 7.0.0                   |
-| Architecture | arm64 (QEMU cortex-a57) |
-| Slurm        | 25.11.4                 |
-| Munge        | 0.5.18                  |
-| PMIx         | 5.0.3                   |
-| FTRFS module | 0.1.0                   |
+| Test | Result | Notes |
+|------|--------|-------|
+| generic/002 | ✅ PASS | file create/delete |
+| generic/257 | ✅ PASS | directory d_off uniqueness |
+| generic/001 | FAIL | writes > 48 KiB — no indirect blocks yet |
+| generic/010 | FAIL | dbm requires files > 48 KiB |
+| generic/098 | FAIL | pwrite at offset > 48 KiB |
 
-Slurm cluster test: 3-node job dispatch validated, latency 0.336 s
-average, 9-job parallel batch 0.052 s per job.
-
-FTRFS mount test (arm64 QEMU, kernel 7.0):
-```
-ftrfs: bitmaps initialized (16377 data blocks, 16377 free; 64 inodes, 63 free)
-ftrfs: mounted (blocks=16384 free=16377 inodes=64)
-```
-Zero RS errors. Zero BUG/WARN/Oops.
+Zero BUG/WARN/Oops/inconsistency in dmesg across all tests.
 
 ---
 
 ## Quick start
 
-### 1. Clone Yocto and this layer
+### Prerequisites
 
-```sh
-git clone https://git.yoctoproject.org/poky -b styhead
-cd poky
-git clone https://github.com/roastercode/yocto-hardened \
-    --branch arm64-ftrfs meta-yocto-hardened-hpc
+- Yocto Styhead (5.1) — `~/yocto/poky`
+- meta-openembedded — `~/yocto/meta-openembedded`
+- meta-selinux — `~/yocto/meta-selinux`
+- Linux kernel 7.0 source — configured in `recipes-kernel/linux/`
+- SSH key pair for HPC admin user
+
+### bblayers.conf
+
+```
+BBLAYERS ?= " \
+  /path/to/poky/meta \
+  /path/to/poky/meta-poky \
+  /path/to/poky/meta-yocto-bsp \
+  /path/to/meta-custom \
+  /path/to/meta-openembedded/meta-oe \
+  /path/to/meta-openembedded/meta-python \
+  /path/to/meta-openembedded/meta-networking \
+  /path/to/meta-openembedded/meta-filesystems \
+  /path/to/meta-selinux \
+"
 ```
 
-### 2. Set credentials
+### Build HPC cluster
 
-```sh
-cd meta-yocto-hardened-hpc/recipes-core/images
-cp credentials.inc.example credentials.inc
-
-# The example hash uses password "root" — suitable for QEMU lab only.
-# For production, generate your own:
-#   openssl passwd -6 yourpassword
-# Each $ must be escaped as \$ in the BitBake file.
-```
-
-### 3. Generate cluster secrets
-
-These files are excluded from version control (see `.gitignore`).
-They must be created locally before the first build.
-
-```sh
-cd meta-yocto-hardened-hpc/recipes-core/images/files
-
-# Munge authentication key — must be identical on all nodes
-dd if=/dev/urandom bs=1 count=1024 > munge.key
-chmod 400 munge.key
-
-# Admin SSH key
-ssh-keygen -t ed25519 -f hpclab_admin -N ""
-# hpclab_admin.pub will be installed as authorized_keys for hpcadmin
-```
-
-### 4. Configure the cluster
-
-Edit `recipes-core/images/hpc-config.inc`, or override in `local.conf`:
-
-```bitbake
-# Point to your generated secrets
-HPC_ADMIN_PUBKEY_FILE = "${LAYERDIR}/recipes-core/images/files/hpclab_admin.pub"
-HPC_MUNGE_KEY_FILE    = "${LAYERDIR}/recipes-core/images/files/munge.key"
-
-# Adjust network if needed (defaults match the QEMU reference lab)
-HPC_MASTER_IP    = "192.168.56.10"
-HPC_COMPUTE01_IP = "192.168.56.11"
-HPC_COMPUTE02_IP = "192.168.56.12"
-HPC_COMPUTE03_IP = "192.168.56.13"
-```
-
-### 5. Add the layer and build
-
-```sh
-cd poky
+```bash
 source oe-init-build-env build-qemu-arm64
-
-# Add to conf/bblayers.conf:
-#   ${TOPDIR}/../meta-yocto-hardened-hpc
-
 bitbake hpc-arm64-master
 bitbake hpc-arm64-compute
 ```
 
-### 6. Boot and set up FTRFS data partition
+### Build xfstests image
 
-```sh
-# On each node after first boot:
+```bash
+bitbake hpc-arm64-xfstests
+CONF=$(ls -t tmp/deploy/images/qemuarm64/hpc-arm64-xfstests-*.qemuboot.conf | head -1)
+runqemu qemuarm64 nographic slirp $CONF
+```
+
+In QEMU:
+
+```bash
 modprobe loop
-dd if=/dev/zero of=/tmp/ftrfs.img bs=4096 count=16384
-mkfs.ftrfs /tmp/ftrfs.img
-losetup /dev/loop0 /tmp/ftrfs.img
-mount -t ftrfs /dev/loop0 /data
-# Verify: dmesg | grep ftrfs
+mkdir -p /data
+dd if=/dev/zero of=/data/test.img bs=4096 count=16384 2>/dev/null
+dd if=/dev/zero of=/data/scratch.img bs=4096 count=16384 2>/dev/null
+mkfs.ftrfs -N 256 /data/test.img && mkfs.ftrfs -N 256 /data/scratch.img
+losetup /dev/loop0 /data/test.img && losetup /dev/loop1 /data/scratch.img
+mkdir -p /mnt/test /mnt/scratch
+mount -t ftrfs /dev/loop0 /mnt/test && mount -t ftrfs /dev/loop1 /mnt/scratch
+mount -t tmpfs -o size=64M tmpfs /tmp
+cd /usr/xfstests && ./check generic/001 generic/002 generic/010 generic/098 generic/257
+```
+
+### Run HPC benchmark
+
+```bash
+bin/hpc-benchmark.sh
 ```
 
 ---
 
-## Files excluded from version control
+## Reference configuration
 
-| File | How to generate |
-|------|-----------------| 
-| `recipes-core/images/credentials.inc` | Copy `.example`, optionally regenerate hash with `openssl passwd -6` |
-| `recipes-core/images/files/munge.key` | `dd if=/dev/urandom bs=1 count=1024 > munge.key` |
-| `recipes-core/images/files/hpclab_admin.pub` | `ssh-keygen -t ed25519 -f hpclab_admin` |
-
----
-
-## Known limitations and roadmap
-
-- `yocto-check-layer` conformance: in progress. Some recipes lack
-  `LIC_FILES_CHKSUM` and `HOMEPAGE`. Planned before meta-oe submission.
-- Tested on arm64 QEMU only. Testing on physical hardware (RPi4,
-  industrial SBCs) welcome.
-- The GCC 15 and QEMU compatibility patches are environment-specific
-  and will be upstreamed or removed before meta-oe submission.
-- FTRFS rootfs support (indirect blocks, symlinks, xattr) is not yet
-  implemented. FTRFS is currently a data partition filesystem only.
-- xfstests Yocto recipe: pending. Required before kernel.org resubmission.
+| Component | Version |
+|-----------|---------|
+| Yocto | Styhead 5.1 |
+| Linux kernel | 7.0.0 |
+| Architecture | arm64 (cortex-a57) |
+| QEMU | 9.0.2 |
+| Slurm | 25.11.4 |
+| Munge | 0.5.18 |
+| PMIx | 5.0.3 |
+| GCC | 14.2.0 (cross) |
 
 ---
 
