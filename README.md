@@ -1,17 +1,42 @@
-# yocto-hardened-hpc
+# yocto-hardened — FTRFS HPC cluster + trust substrate
 
-Yocto layer providing a complete hardened embedded Linux stack for HPC
-and space applications. Validated on arm64 QEMU, kernel 7.0,
-Yocto Styhead 5.1.
+Yocto BSP layer for radiation-hardened embedded Linux on arm64.
+Counterpart of the [FTRFS kernel filesystem](https://github.com/roastercode/FTRFS),
+an RFC submitted to linux-fsdevel in April 2026.
+
+## What this is
+
+FTRFS (Fault-Tolerant Radiation-Robust Filesystem) is a new Linux filesystem
+designed for environments where storage is permanently exposed to radiation:
+nanosatellites, CubeSats, nuclear robotics, space HPC. It provides RS(255,239)
+Reed-Solomon FEC per block, CRC32 per inode, and a Radiation Event Journal (RAF)
+in the superblock — all in under 5000 auditable lines, targeting DO-178C and
+ECSS-E-ST-40C certification.
+
+This layer validates FTRFS on a real arm64 HPC cluster (Slurm 25.11.4, 4 nodes,
+QEMU KVM) and builds the infrastructure above the filesystem: event attestation,
+per-node RAF monitoring, and the foundations of a distributed trust substrate
+for autonomous systems that cannot rely on continuous connectivity or a central
+authority.
+
+## Branches
+
+| Branch | Description | Status |
+|--------|-------------|--------|
+| `arm64-ftrfs` | FTRFS + Slurm HPC cluster, xfstests validation | ✅ validated |
+| `semantic-sync` | ftrfsd RAF monitor, trust substrate prototype | ✅ validated |
+| `yocto-hpc` | x86-64 HPC cluster (Styhead 5.1, Slurm) | ✅ stable |
+| `ext4-dm-verity-selinux` | dm-verity + SELinux hardened image | stable |
+| `squashfs-selinux-permissive` | squashfs + SELinux permissive | stable |
 
 ## Status
 
 Functional and validated on the reference configuration below.
 Not yet submitted to meta-openembedded.
 
-This layer is the Yocto counterpart of the
-[FTRFS kernel filesystem](https://github.com/roastercode/FTRFS),
-an RFC submitted to linux-fsdevel in April 2026.
+FTRFS RFC v3 submitted to linux-fsdevel, April 2026.
+Active reviewers: Matthew Wilcox, Darrick J. Wong, Andreas Dilger,
+Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 
 ### Milestone log
 
@@ -39,10 +64,14 @@ an RFC submitted to linux-fsdevel in April 2026.
 
 ## What this layer provides
 
-- **FTRFS** — Fault-Tolerant Radiation-Robust Filesystem. Out-of-tree
-  kernel module with RS FEC, CRC32, Radiation Event Journal, single
-  indirect block support (~2 MiB per file).
+- **FTRFS kernel module** — RS(255,239) FEC, CRC32, Radiation Event Journal,
+  indirect blocks (~2 MiB/file), iomap IO path.
   See [github.com/roastercode/FTRFS](https://github.com/roastercode/FTRFS)
+
+- **ftrfsd** — Radiation Event Journal monitor daemon. Reads the RAF ring
+  buffer from the FTRFS superblock every 5s, validates entries via CRC32,
+  logs RS correction events to syslog. Deployed on all cluster nodes.
+  First brick of the semantic-sync trust substrate.
 
 - **Slurm 25.11.4** — HPC workload manager, cross-compiled for arm64
 
@@ -50,15 +79,21 @@ an RFC submitted to linux-fsdevel in April 2026.
 
 - **PMIx 5.0.3** — process management interface for HPC workloads
 
-- **ftrfsd** — Radiation Event Journal monitor daemon. Reads the RAF
-  ring buffer from FTRFS superblock every 5s, logs RS correction events
-  to syslog. Deployed on all cluster nodes (master + compute).
-  First brick of the semantic-sync trust substrate.
-
 - **xfstests image** — `hpc-arm64-xfstests` with GNU grep, GNU hostname,
   xfstests, mkfs.ftrfs -N 256, fsck.ftrfs stub
 
 ---
+
+## Benchmark results (2026-04-21, arm64 kernel 7.0, 4-node cluster)
+
+| Test | Result |
+|------|--------|
+| Job submission latency (single node) | 0.26s |
+| 3-node parallel job | 0.35s |
+| 9-job throughput | 5.41s |
+| FTRFS mount (all 4 nodes) | ✅ clean |
+| ftrfsd RAF monitor (all 4 nodes) | ✅ running |
+| dmesg BUG/WARN/Oops | 0 |
 
 ## xfstests results (2026-04-18, arm64 kernel 7.0)
 
@@ -75,18 +110,18 @@ Zero BUG/WARN/Oops/inconsistency in dmesg across all tests.
 ### Running xfstests
 
 ```bash
-# Build
+source oe-init-build-env build-qemu-arm64
 bitbake hpc-arm64-xfstests
 CONF=$(ls -t tmp/deploy/images/qemuarm64/hpc-arm64-xfstests-*.qemuboot.conf | head -1)
 runqemu qemuarm64 nographic slirp $CONF
 ```
 
-In QEMU (use large images for generic/001):
+In QEMU:
 
 ```bash
 modprobe loop
 mkdir -p /data
-dd if=/dev/zero of=/data/test.img bs=4096 count=131072 2>/dev/null  # 512 MiB
+dd if=/dev/zero of=/data/test.img bs=4096 count=131072 2>/dev/null
 dd if=/dev/zero of=/data/scratch.img bs=4096 count=131072 2>/dev/null
 mkfs.ftrfs -N 256 /data/test.img && mkfs.ftrfs -N 256 /data/scratch.img
 losetup /dev/loop0 /data/test.img && losetup /dev/loop1 /data/scratch.img
@@ -105,7 +140,7 @@ cd /usr/xfstests && ./check generic/002 generic/010 generic/098 generic/257
 source oe-init-build-env build-qemu-arm64
 bitbake hpc-arm64-master
 bitbake hpc-arm64-compute
-bin/hpc-benchmark.sh
+bash bin/hpc-benchmark.sh
 ```
 
 ---
@@ -132,3 +167,8 @@ MIT — see `LICENSE`.
 ## Maintainer
 
 Aurelien DESBRIERES `<aurelien@hackers.camp>`
+
+---
+
+*Part of the FTRFS ecosystem:*
+*[github.com/roastercode/FTRFS](https://github.com/roastercode/FTRFS)*
