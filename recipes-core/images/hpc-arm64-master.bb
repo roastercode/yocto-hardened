@@ -52,6 +52,7 @@ IMAGE_INSTALL = " \
     lsof \
     ftrfs-module \
     mkfs-ftrfs \
+    ftrfsd \
     ${CORE_IMAGE_EXTRA_INSTALL} \
 "
 

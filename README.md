@@ -30,6 +30,10 @@ an RFC submitted to linux-fsdevel in April 2026.
 | 2026-04-18 | Single indirect block support (~2 MiB per file) |
 | 2026-04-18 | Data block free on delete (ftrfs_free_data_blocks) |
 | 2026-04-18 | xfstests generic/002, 010, 098, 257 PASS — 0 BUG/WARN |
+| 2026-04-20 | edac.c: migrate RS FEC to lib/reed_solomon (Eric Biggers review) |
+| 2026-04-21 | ftrfsd: RAF monitor daemon, deployed on 4-node arm64 cluster |
+| 2026-04-21 | semantic-sync branch: trust substrate prototype initiated |
+| 2026-04-21 | Slurm benchmark: 0.26s job latency, 9-job throughput 5.41s, 0 BUG/WARN |
 
 ---
 
@@ -45,6 +49,11 @@ an RFC submitted to linux-fsdevel in April 2026.
 - **Munge 0.5.18** — authentication service for Slurm
 
 - **PMIx 5.0.3** — process management interface for HPC workloads
+
+- **ftrfsd** — Radiation Event Journal monitor daemon. Reads the RAF
+  ring buffer from FTRFS superblock every 5s, logs RS correction events
+  to syslog. Deployed on all cluster nodes (master + compute).
+  First brick of the semantic-sync trust substrate.
 
 - **xfstests image** — `hpc-arm64-xfstests` with GNU grep, GNU hostname,
   xfstests, mkfs.ftrfs -N 256, fsck.ftrfs stub

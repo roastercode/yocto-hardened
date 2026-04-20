@@ -91,12 +91,15 @@ $SSH hpcadmin@192.168.56.10 "sinfo -N -l"
 echo "[7/8] Mounting FTRFS on all nodes..."
 for i in 10 11 12 13; do
     $SSH hpcadmin@192.168.56.${i} "
+sudo modprobe reed_solomon 2>/dev/null || true
 sudo insmod /lib/modules/7.0.0/updates/ftrfs.ko 2>/dev/null || true
 sudo dd if=/dev/zero of=/tmp/ftrfs.img bs=4096 count=16384 2>/dev/null
 sudo mkfs.ftrfs /tmp/ftrfs.img
 sudo modprobe loop
 sudo losetup /dev/loop0 /tmp/ftrfs.img
 sudo mount -t ftrfs /dev/loop0 /data
+sudo nohup ftrfsd /dev/loop0 > /dev/null 2>&1 &
+sleep 1
 dmesg | grep ftrfs | grep -v 'loading out-of-tree'
 " 2>/dev/null &
 done
@@ -128,7 +131,7 @@ wait
 '
 echo '--- FTRFS write from Slurm job ---'
 srun --nodes=3 --ntasks=3 sh -c 'echo \$(hostname):\$(date) | sudo tee /data/slurm-\$(hostname).txt'
-srun --nodes=3 --ntasks=3 cat /data/slurm-\$(hostname).txt
+srun --nodes=3 --ntasks=3 sh -c 'cat /data/slurm-\$(hostname).txt'
 "
 echo "================================================================"
 echo "Benchmark complete -- $(date)"
