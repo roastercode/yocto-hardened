@@ -98,8 +98,8 @@ sudo mkfs.ftrfs /tmp/ftrfs.img
 sudo modprobe loop
 sudo losetup /dev/loop0 /tmp/ftrfs.img
 sudo mount -t ftrfs /dev/loop0 /data
-sudo nohup ftrfsd /dev/loop0 > /dev/null 2>&1 &
-sleep 1
+sudo setsid ftrfsd /dev/loop0 > /dev/null 2>&1 &
+sleep 2
 dmesg | grep ftrfs | grep -v 'loading out-of-tree'
 " 2>/dev/null &
 done

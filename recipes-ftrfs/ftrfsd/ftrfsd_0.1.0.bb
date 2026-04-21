@@ -12,13 +12,16 @@ DESCRIPTION = "Reads the RAF ring buffer from a FTRFS superblock and logs \
 RS correction events to syslog. First brique of the semantic-sync \
 trust substrate: verifiable per-node event attestation."
 LICENSE = "GPL-2.0-only"
+PR = "r1"
 LIC_FILES_CHKSUM = "file://ftrfsd.c;beginline=1;endline=2;md5=657d74fcbced6c83d92fc8b579438888"
+
+DEPENDS = "openssl"
 
 SRC_URI = "file://ftrfsd-0.1.0/"
 S = "${WORKDIR}/ftrfsd-0.1.0"
 
 do_compile() {
-    ${CC} ${CFLAGS} ${LDFLAGS} -o ftrfsd ftrfsd.c
+    ${CC} ${CFLAGS} ${LDFLAGS} -o ftrfsd ftrfsd.c -lcrypto
 }
 
 do_install() {

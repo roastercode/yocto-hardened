@@ -59,6 +59,8 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 | 2026-04-21 | ftrfsd: RAF monitor daemon, deployed on 4-node arm64 cluster |
 | 2026-04-21 | semantic-sync branch: trust substrate prototype initiated |
 | 2026-04-21 | Slurm benchmark: 0.26s job latency, 9-job throughput 5.41s, 0 BUG/WARN |
+| 2026-04-21 | ftrfsd v2: Ed25519 per-node attestation, statfs FTRFS wait, flock lockfile |
+| 2026-04-21 | 4 unique Ed25519 keys verified on master + 3 compute nodes |
 
 ---
 
@@ -68,10 +70,12 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
   indirect blocks (~2 MiB/file), iomap IO path.
   See [github.com/roastercode/FTRFS](https://github.com/roastercode/FTRFS)
 
-- **ftrfsd** — Radiation Event Journal monitor daemon. Reads the RAF ring
-  buffer from the FTRFS superblock every 5s, validates entries via CRC32,
-  logs RS correction events to syslog. Deployed on all cluster nodes.
-  First brick of the semantic-sync trust substrate.
+- **ftrfsd v2** — Radiation Event Journal monitor daemon with Ed25519
+  per-node attestation. Waits for FTRFS mount via statfs(), acquires
+  exclusive flock() lockfile, generates node-local Ed25519 keypair on
+  first run (stored on FTRFS at /data/ftrfsd/), signs each RAF correction
+  event and logs signed attestation to syslog. Deployed on all 4 cluster
+  nodes with unique keys. First brick of the semantic-sync trust substrate.
 
 - **Slurm 25.11.4** — HPC workload manager, cross-compiled for arm64
 
