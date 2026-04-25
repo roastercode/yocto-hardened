@@ -89,7 +89,22 @@ $SSH hpcadmin@192.168.56.10 "sinfo -N -l"
 
 # 7. Mount FTRFS on all nodes
 echo "[7/8] Mounting FTRFS on all nodes..."
-for i in 10 11 12 13; do
+# Master node: mount FTRFS + start ftrfsd in master mode
+$SSH hpcadmin@192.168.56.10 "
+sudo modprobe reed_solomon 2>/dev/null || true
+sudo insmod /lib/modules/7.0.0/updates/ftrfs.ko 2>/dev/null || true
+sudo dd if=/dev/zero of=/tmp/ftrfs.img bs=4096 count=16384 2>/dev/null
+sudo mkfs.ftrfs /tmp/ftrfs.img
+sudo modprobe loop
+sudo losetup /dev/loop0 /tmp/ftrfs.img
+sudo mount -t ftrfs /dev/loop0 /data
+sudo setsid ftrfsd /dev/loop0 --master > /dev/null 2>&1 &
+sleep 3
+dmesg | grep ftrfs | grep -v 'loading out-of-tree'
+" 2>/dev/null
+
+# Compute nodes: mount FTRFS + start ftrfsd in peer mode
+for i in 11 12 13; do
     $SSH hpcadmin@192.168.56.${i} "
 sudo modprobe reed_solomon 2>/dev/null || true
 sudo insmod /lib/modules/7.0.0/updates/ftrfs.ko 2>/dev/null || true
@@ -98,7 +113,7 @@ sudo mkfs.ftrfs /tmp/ftrfs.img
 sudo modprobe loop
 sudo losetup /dev/loop0 /tmp/ftrfs.img
 sudo mount -t ftrfs /dev/loop0 /data
-sudo setsid ftrfsd /dev/loop0 > /dev/null 2>&1 &
+sudo setsid ftrfsd /dev/loop0 --peer 192.168.56.10 > /dev/null 2>&1 &
 sleep 2
 dmesg | grep ftrfs | grep -v 'loading out-of-tree'
 " 2>/dev/null &
