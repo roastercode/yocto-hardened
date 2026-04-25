@@ -8,10 +8,12 @@ an RFC submitted to linux-fsdevel in April 2026.
 
 FTRFS (Fault-Tolerant Radiation-Robust Filesystem) is a new Linux filesystem
 designed for environments where storage is permanently exposed to radiation:
-nanosatellites, CubeSats, nuclear robotics, space HPC. It provides RS(255,239)
-Reed-Solomon FEC per block, CRC32 per inode, and a Radiation Event Journal (RAF)
-in the superblock — all in under 5000 auditable lines, targeting DO-178C and
-ECSS-E-ST-40C certification.
+nanosatellites, CubeSats, nuclear robotics, space HPC. The current
+implementation provides CRC32 integrity on metadata (superblock, inodes,
+Radiation Event Journal) and RS(255,239) Reed-Solomon FEC on the on-disk
+allocation bitmap via the kernel's `lib/reed_solomon` library. Extending
+RS FEC to data blocks at writeback is on the roadmap. The codebase targets
+under 5000 auditable lines for DO-178C and ECSS-E-ST-40C certification.
 
 This layer validates FTRFS on a real arm64 HPC cluster (Slurm 25.11.4, 4 nodes,
 QEMU KVM) and builds the infrastructure above the filesystem: event attestation,
@@ -61,6 +63,10 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 | 2026-04-21 | Slurm benchmark: 0.26s job latency, 9-job throughput 5.41s, 0 BUG/WARN |
 | 2026-04-21 | ftrfsd v2: Ed25519 per-node attestation, statfs FTRFS wait, flock lockfile |
 | 2026-04-21 | 4 unique Ed25519 keys verified on master + 3 compute nodes |
+| 2026-04-25 | FTRFS upstream sync: ftrfs_write_inode_raw cross-TU, REED_SOLOMON_ENC8/DEC8 select, drop unimplemented XATTR/SECURITY Kconfig |
+| 2026-04-25 | Kernel config cleanup: KASAN/UBSAN removed (out-of-tree module mismatch with non-instrumented kernel) |
+| 2026-04-25 | ftrfsd v3: distributed attestation over TCP with Ed25519, master/peer modes, inject_raf helper |
+| 2026-04-25 | 4-node HPC cluster bench re-validated, ftrfsd master+3 peers operational, 0 RS errors, 0 BUG/WARN |
 
 ---
 
@@ -70,12 +76,16 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
   indirect blocks (~2 MiB/file), iomap IO path.
   See [github.com/roastercode/FTRFS](https://github.com/roastercode/FTRFS)
 
-- **ftrfsd v2** — Radiation Event Journal monitor daemon with Ed25519
-  per-node attestation. Waits for FTRFS mount via statfs(), acquires
-  exclusive flock() lockfile, generates node-local Ed25519 keypair on
-  first run (stored on FTRFS at /data/ftrfsd/), signs each RAF correction
-  event and logs signed attestation to syslog. Deployed on all 4 cluster
-  nodes with unique keys. First brick of the semantic-sync trust substrate.
+- **ftrfsd v3** — Radiation Event Journal monitor daemon with Ed25519
+  per-node attestation and cluster-wide signed event propagation over TCP.
+  Three modes: standalone (local syslog), `--master` (TCP listener on
+  port 7700), `--peer <master_ip>` (connects to master, signs and forwards
+  events). Binary protocol with HELLO/ACK/EVENT/PING messages; Ed25519
+  provides authentication (no TLS). Per-node Ed25519 keypair stored on
+  FTRFS at `/data/ftrfsd/`. Deployed on all 4 cluster nodes with unique
+  keys. Companion tool `inject_raf` injects valid RAF events into the
+  superblock for end-to-end test of the signature/propagation chain.
+  Second brick of the semantic-sync trust substrate.
 
 - **Slurm 25.11.4** — HPC workload manager, cross-compiled for arm64
 
@@ -98,6 +108,11 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 | FTRFS mount (all 4 nodes) | ✅ clean |
 | ftrfsd RAF monitor (all 4 nodes) | ✅ running |
 | dmesg BUG/WARN/Oops | 0 |
+
+Re-validated 2026-04-25 — same configuration, same FTRFS sources after
+upstream sync, ftrfsd v3 master+3 peers operational on the 4 nodes.
+Functional behavior consistent with the reference run; zero RS errors,
+zero BUG/WARN/Oops in dmesg.
 
 ## xfstests results (2026-04-18, arm64 kernel 7.0)
 
@@ -163,6 +178,37 @@ bash bin/hpc-benchmark.sh
 | GCC | 14.2.0 (cross) |
 
 ---
+
+## Press & community coverage
+
+- Phoronix — *FTRFS: New Fault-Tolerant File-System Proposed For Linux* (2026-04-13):
+  https://www.phoronix.com/news/FTRFS-Linux-File-System
+- Phoronix — *Linux 7.1 Staging* (FTRFS mention):
+  https://www.phoronix.com/news/Linux-7.1-Staging
+- LWN.net — *ftrfs: Fault-Tolerant Radiation-Robust Filesystem*:
+  https://lwn.net/Articles/1067452/
+- daily.dev:
+  https://app.daily.dev/posts/ftrfs-new-fault-tolerant-file-system-proposed-for-linux-m5rbha19y
+- Reddit r/filesystems:
+  https://www.reddit.com/r/filesystems/comments/1skjj18/
+- Reddit r/phoronix_com:
+  https://www.reddit.com/r/phoronix_com/comments/1skbg7q/
+- X/Twitter @phoronix:
+  https://x.com/phoronix/status/2043678672775754091
+- X/Twitter @jreuben1:
+  https://x.com/jreuben1/status/2043912800376889429
+- Telegram Linuxgram (2026-04-13):
+  https://t.me/s/linuxgram?before=18454
+- YouTube — Genai Linux News:
+  https://www.youtube.com/watch?v=EKA93IBcCvk
+
+RFC threads on lore.kernel.org:
+
+| Version | Date | Lore archive |
+|---------|------|--------------|
+| RFC v1 | 2026-04-13 | https://lore.kernel.org/linux-fsdevel/20260413142357.515792-1-aurelien@hackers.camp/ |
+| RFC v2 | 2026-04-13 | https://lore.kernel.org/linux-fsdevel/20260413230601.525400-1-aurelien@hackers.camp/ |
+| RFC v3 | 2026-04-14 | https://lore.kernel.org/linux-fsdevel/20260414120726.5713-1-aurelien@hackers.camp/ |
 
 ## License
 
