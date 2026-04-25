@@ -170,9 +170,6 @@ static inline struct ftrfs_sb_info *FTRFS_SB(struct super_block *sb)
 }
 
 /* Function prototypes */
-
-/* namei.c */
-int ftrfs_write_inode_raw(struct inode *inode);
 /* super.c */
 int ftrfs_fill_super(struct super_block *sb, struct fs_context *fc);
 void ftrfs_log_rs_event(struct super_block *sb, u64 block_no, u32 err_bits);
@@ -213,5 +210,6 @@ struct dentry *ftrfs_lookup(struct inode *dir, struct dentry *dentry,
 
 /* namei.c */
 int ftrfs_write_inode(struct inode *inode, struct writeback_control *wbc);
+int ftrfs_write_inode_raw(struct inode *inode);
 
 #endif /* _FTRFS_H */
