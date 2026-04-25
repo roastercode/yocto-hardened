@@ -25,8 +25,7 @@ authority.
 
 | Branch | Description | Status |
 |--------|-------------|--------|
-| `arm64-ftrfs` | FTRFS + Slurm HPC cluster, xfstests validation | ✅ validated |
-| `semantic-sync` | ftrfsd RAF monitor, trust substrate prototype | ✅ validated |
+| `arm64-ftrfs` | FTRFS + Slurm HPC cluster, ftrfsd v3, xfstests validation | ✅ validated |
 | `yocto-hpc` | x86-64 HPC cluster (Styhead 5.1, Slurm) | ✅ stable |
 | `ext4-dm-verity-selinux` | dm-verity + SELinux hardened image | stable |
 | `squashfs-selinux-permissive` | squashfs + SELinux permissive | stable |
@@ -59,7 +58,7 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 | 2026-04-18 | xfstests generic/002, 010, 098, 257 PASS — 0 BUG/WARN |
 | 2026-04-20 | edac.c: migrate RS FEC to lib/reed_solomon (Eric Biggers review) |
 | 2026-04-21 | ftrfsd: RAF monitor daemon, deployed on 4-node arm64 cluster |
-| 2026-04-21 | semantic-sync branch: trust substrate prototype initiated |
+| 2026-04-21 | trust substrate prototype initiated (later merged into arm64-ftrfs) |
 | 2026-04-21 | Slurm benchmark: 0.26s job latency, 9-job throughput 5.41s, 0 BUG/WARN |
 | 2026-04-21 | ftrfsd v2: Ed25519 per-node attestation, statfs FTRFS wait, flock lockfile |
 | 2026-04-21 | 4 unique Ed25519 keys verified on master + 3 compute nodes |
@@ -85,7 +84,7 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
   FTRFS at `/data/ftrfsd/`. Deployed on all 4 cluster nodes with unique
   keys. Companion tool `inject_raf` injects valid RAF events into the
   superblock for end-to-end test of the signature/propagation chain.
-  Second brick of the semantic-sync trust substrate.
+  Second brick of the trust substrate for autonomous distributed systems.
 
 - **Slurm 25.11.4** — HPC workload manager, cross-compiled for arm64
 
