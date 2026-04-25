@@ -65,11 +65,14 @@ void ftrfs_rs_exit_tables(void)
  * @data:   input data (FTRFS_SUBBLOCK_DATA bytes)
  * @parity: output parity (FTRFS_RS_PARITY bytes)
  *
- * encode_rs8() takes data as u8* directly; only par is u16*.
+ * lib/reed_solomon works with uint16_t arrays (symbols). We expand
+ * each byte to uint16_t before encoding, then truncate back to uint8_t.
+ * The kernel encode_rs8 API takes uint8_t *data directly; parity is
+ * returned via a uint16_t *par buffer (low byte holds the parity symbol).
  */
-int ftrfs_rs_encode(u8 *data, u8 *parity)
+int ftrfs_rs_encode(uint8_t *data, uint8_t *parity)
 {
-	u16 par[FTRFS_RS_PARITY];
+	uint16_t par[FTRFS_RS_PARITY];
 	int i;
 
 	if (!ftrfs_rs_ctrl)
@@ -79,7 +82,7 @@ int ftrfs_rs_encode(u8 *data, u8 *parity)
 	encode_rs8(ftrfs_rs_ctrl, data, FTRFS_SUBBLOCK_DATA, par, 0);
 
 	for (i = 0; i < FTRFS_RS_PARITY; i++)
-		parity[i] = (u8)par[i];
+		parity[i] = (uint8_t)par[i];
 
 	return 0;
 }
@@ -89,13 +92,12 @@ int ftrfs_rs_encode(u8 *data, u8 *parity)
  * @data:   data bytes (FTRFS_SUBBLOCK_DATA), corrected in place on success
  * @parity: parity bytes (FTRFS_RS_PARITY)
  *
- * decode_rs8() takes data as u8* directly; par is u16*.
  * Returns 0 if no errors or errors corrected successfully,
  * -EBADMSG if uncorrectable (more than FTRFS_RS_PARITY/2 symbol errors).
  */
-int ftrfs_rs_decode(u8 *data, u8 *parity)
+int ftrfs_rs_decode(uint8_t *data, uint8_t *parity)
 {
-	u16 par[FTRFS_RS_PARITY];
+	uint16_t par[FTRFS_RS_PARITY];
 	int i, nerr;
 
 	if (!ftrfs_rs_ctrl)
@@ -104,6 +106,10 @@ int ftrfs_rs_decode(u8 *data, u8 *parity)
 	for (i = 0; i < FTRFS_RS_PARITY; i++)
 		par[i] = parity[i];
 
+	/*
+	 * decode_rs8 takes uint8_t *data and corrects in place. No
+	 * temporary buffer or post-decode copy-back is needed.
+	 */
 	nerr = decode_rs8(ftrfs_rs_ctrl, data, par, FTRFS_SUBBLOCK_DATA,
 			  NULL, 0, NULL, 0, NULL);
 
@@ -112,7 +118,6 @@ int ftrfs_rs_decode(u8 *data, u8 *parity)
 		return -EBADMSG;
 	}
 
-	/* data[] already corrected in place by decode_rs8 if nerr > 0 */
 	return 0;
 }
 
@@ -130,37 +135,29 @@ __u32 ftrfs_crc32(const void *buf, size_t len)
 }
 
 /*
- * ftrfs_crc32_sb — compute CRC32 over the meaningful superblock fields
+ * ftrfs_crc32_sb -- compute CRC32 over the meaningful regions of the
+ *                   superblock, excluding s_crc32 itself and s_pad.
  *
- * Covers [0, offsetof(s_crc32)) and [offsetof(s_uuid), offsetof(s_pad)).
- * This includes the RS journal but excludes s_crc32 itself and s_pad.
- * Uses crc32_le() chaining so no temporary buffer is needed.
+ * Coverage:
+ *   [0, offsetof(s_crc32))               = 64 bytes
+ *   [offsetof(s_uuid), offsetof(s_pad))  = 1621 bytes
  *
- * Compared to the original design which only covered the first 64 bytes,
- * this detects corruption or tampering in the RS Radiation Event Journal.
+ * Chained via crc32_le without intermediate XOR. Must match the
+ * userspace mkfs.ftrfs implementation byte-for-byte so that
+ * superblocks formatted by mkfs validate at mount time.
+ *
+ * The v3 format extension (commit 2ec4cb4) added 28 bytes of
+ * feature fields between s_bitmap_blk and s_pad; the second
+ * coverage region is sized to include them. v2 superblocks
+ * predating that extension are correctly rejected by the
+ * resulting CRC mismatch.
  */
 __u32 ftrfs_crc32_sb(const struct ftrfs_super_block *fsb)
 {
-	__u32 crc;
-	const __u8 *base = (const __u8 *)fsb;
+	const u8 *base = (const u8 *)fsb;
+	u32 c;
 
-	/*
-	 * crc32_le(seed, buf, len): seed and return value are both the raw
-	 * internal CRC state (NOT XOR-finalized). Chain directly by passing
-	 * the result of part 1 as seed for part 2.
-	 *
-	 * Part 1: [0, offsetof(s_crc32)) = 64 bytes
-	 */
-	crc = crc32_le(0xFFFFFFFF, base,
-		       offsetof(struct ftrfs_super_block, s_crc32));
-
-	/* Part 2: [offsetof(s_uuid), offsetof(s_pad)) = 1585 bytes */
-	crc = crc32_le(crc,
-		       base + offsetof(struct ftrfs_super_block, s_uuid),
-		       offsetof(struct ftrfs_super_block, s_pad) -
-		       offsetof(struct ftrfs_super_block, s_uuid));
-
-	/* Final XOR to produce standard CRC-32/ISO-HDLC output */
-	return crc ^ 0xFFFFFFFF;
+	c = crc32_le(0xFFFFFFFF, base, 64);
+	c = crc32_le(c, base + 68, 1689 - 68);
+	return c ^ 0xFFFFFFFF;
 }
-

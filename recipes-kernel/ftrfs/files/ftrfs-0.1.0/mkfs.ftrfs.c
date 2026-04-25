@@ -36,6 +36,13 @@
 #define FTRFS_BITMAP_SUBBLOCKS 16
 #define FTRFS_BITMAP_DATA_BYTES (FTRFS_BITMAP_SUBBLOCKS * FTRFS_SUBBLOCK_DATA)
 
+/* Format version (must match kernel ftrfs.h) */
+#define FTRFS_VERSION_V3        3
+
+/* Data protection scheme values (must match kernel ftrfs.h) */
+#define FTRFS_DATA_PROTECTION_NONE              0
+#define FTRFS_DATA_PROTECTION_INODE_OPT_IN      1
+
 /* Minimal CRC32 for userspace mkfs */
 static uint32_t crc32_table[256];
 static int crc32_init_done = 0;
@@ -98,12 +105,19 @@ struct ftrfs_super_block {
 	struct ftrfs_rs_event s_rs_journal[FTRFS_RS_JOURNAL_SIZE]; /* 1536 bytes */
 	uint8_t  s_rs_journal_head;
 	uint64_t s_bitmap_blk;       /* on-disk block bitmap block number */
-	uint8_t  s_pad[2435];        /* padding to 4096 bytes */
+	uint64_t s_feat_compat;
+	uint64_t s_feat_incompat;
+	uint64_t s_feat_ro_compat;
+	uint32_t s_data_protection_scheme;
+	uint8_t  s_pad[2407];        /* padding to 4096 bytes */
 } __attribute__((packed));
 
 /*
  * crc32_sb — CRC32 over superblock fields matching ftrfs_crc32_sb() in kernel.
  * Covers [0, offsetof(s_crc32)) and [offsetof(s_uuid), offsetof(s_pad)).
+ *
+ * Coverage region 2 = 1621 bytes, sized for the v3 superblock layout
+ * which includes the feature fields between s_bitmap_blk and s_pad.
  */
 static uint32_t crc32_sb(const struct ftrfs_super_block *sb)
 {
@@ -111,7 +125,7 @@ static uint32_t crc32_sb(const struct ftrfs_super_block *sb)
 	uint32_t c;
 
 	c = crc32_internal(0xFFFFFFFF, base, 64);
-	c = crc32_internal(c, base + 68, 1661 - 68);
+	c = crc32_internal(c, base + 68, 1689 - 68);
 	return c ^ 0xFFFFFFFF;
 }
 
@@ -373,14 +387,21 @@ int main(int argc, char *argv[])
 	sb.s_free_inodes    = total_inodes - 1; /* root inode used */
 	sb.s_inode_table_blk = inode_table_blk;
 	sb.s_data_start_blk  = data_start_blk;
-	sb.s_version        = 2; /* v2: on-disk bitmap with RS FEC */
+	sb.s_version        = FTRFS_VERSION_V3;
 	sb.s_bitmap_blk     = bitmap_blk;
+	sb.s_feat_compat    = 0;
+	sb.s_feat_incompat  = 0;
+	sb.s_feat_ro_compat = 0;
+	sb.s_data_protection_scheme = FTRFS_DATA_PROTECTION_INODE_OPT_IN;
 	sb.s_crc32          = crc32_sb(&sb);
 
 	write_block(fd, 0, &sb);
 	close(fd);
 
 	printf("mkfs.ftrfs: formatted %s\n", argv[optind]);
+	printf("  format:  v%u (scheme=%u INODE_OPT_IN, no incompat features)\n",
+	       (unsigned)sb.s_version,
+	       (unsigned)sb.s_data_protection_scheme);
 	printf("  blocks:  %lu (free: %lu)\n",
 	       (unsigned long)total_blocks,
 	       (unsigned long)sb.s_free_blocks);

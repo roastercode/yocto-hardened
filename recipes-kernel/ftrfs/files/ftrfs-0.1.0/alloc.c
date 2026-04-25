@@ -109,8 +109,8 @@ int ftrfs_setup_bitmap(struct super_block *sb)
 			pr_warn("ftrfs: bitmap subblock %lu: %d symbol(s) corrected\n",
 				i, rc);
 			ftrfs_log_rs_event(sb,
-					   (u64)bitmap_blk * FTRFS_BITMAP_SUBBLOCKS + i,
-					   (u32)rc);
+				(u64)bitmap_blk * FTRFS_BITMAP_SUBBLOCKS + i,
+				(u32)rc);
 			corrected = true;
 		}
 	}
@@ -181,15 +181,6 @@ int ftrfs_setup_bitmap(struct super_block *sb)
 		}
 		brelse(bh);
 	}
-
-	/*
-	 * Recompute s_free_inodes from the actual bitmap to avoid divergence
-	 * between the on-disk superblock counter and the in-memory bitmap state.
-	 * The on-disk counter may be stale after unclean shutdown or xfstests.
-	 */
-	sbi->s_free_inodes = bitmap_weight(sbi->s_inode_bitmap, total_inodes + 1);
-	sbi->s_ftrfs_sb->s_free_inodes = cpu_to_le64(sbi->s_free_inodes);
-	mark_buffer_dirty(sbi->s_sbh);
 
 	pr_info("ftrfs: bitmaps initialized (%lu data blocks, %lu free; "
 		"%lu inodes, %lu free)\n",
