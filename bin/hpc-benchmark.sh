@@ -5,148 +5,249 @@
 set -e
 
 SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/hpclab_admin"
-FTRFS_KO=$(find ~/yocto/poky/build-qemu-arm64/tmp/work/qemuarm64-poky-linux/ftrfs-module/ -name "ftrfs.ko" | tail -1)
 DEPLOY=~/yocto/poky/build-qemu-arm64/tmp/deploy/images/qemuarm64
-MASTER_IMG=$(ls -t $DEPLOY/hpc-arm64-master-qemuarm64-*.ext4 | head -1)
-COMPUTE_IMG=$(ls -t $DEPLOY/hpc-arm64-compute-qemuarm64-*.ext4 | head -1)
+RESEARCH_IMG=$DEPLOY/hpc-arm64-research-qemuarm64.squashfs
+LIBVIRT_DIR=/var/lib/libvirt/images/hpc-arm64
+
+# Cluster topology: hostname IP (must match slurm.conf and /etc/hosts in image)
+NODES_ALL=("arm64-master:192.168.56.10" "arm64-compute01:192.168.56.11" "arm64-compute02:192.168.56.12" "arm64-compute03:192.168.56.13")
+NODES_COMPUTE=("arm64-compute01:192.168.56.11" "arm64-compute02:192.168.56.12" "arm64-compute03:192.168.56.13")
 
 echo "================================================================"
 echo " HPC Cluster Benchmark -- $(date)"
 echo "================================================================"
-echo "ftrfs.ko: $FTRFS_KO"
-echo "master:   $MASTER_IMG"
-echo "compute:  $COMPUTE_IMG"
+echo "research image: $RESEARCH_IMG"
+echo "libvirt dir:    $LIBVIRT_DIR"
+echo "nodes:          ${NODES_ALL[@]}"
 echo ""
 
 # 1. Stop VMs
-echo "[1/8] Stopping VMs..."
-sudo virsh destroy arm64-master 2>/dev/null || true
-sudo virsh destroy arm64-compute01 2>/dev/null || true
-sudo virsh destroy arm64-compute02 2>/dev/null || true
-sudo virsh destroy arm64-compute03 2>/dev/null || true
+echo "[1/7] Stopping VMs..."
+for entry in "${NODES_ALL[@]}"; do
+    name="${entry%%:*}"
+    sudo virsh destroy "$name" 2>/dev/null || true
+done
 sleep 3
 
-# 2. Deploy fresh images
-echo "[2/8] Deploying images..."
-sudo cp $MASTER_IMG /var/lib/libvirt/images/hpc-arm64/arm64-master.ext4
-for node in compute01 compute02 compute03; do
-    sudo cp $COMPUTE_IMG /var/lib/libvirt/images/hpc-arm64/arm64-${node}.ext4
+# 2. Deploy research image (one squashfs per VM) + ensure libvirt XML
+#    points to squashfs with proper kernel cmdline (rootfstype=squashfs ro
+#    + ftrfs.hostname=<name> for the in-image init script).
+echo "[2/7] Deploying research image to libvirt..."
+for entry in "${NODES_ALL[@]}"; do
+    name="${entry%%:*}"
+    sudo cp "$RESEARCH_IMG" "$LIBVIRT_DIR/${name}.squashfs"
+    sudo chown qemu:qemu "$LIBVIRT_DIR/${name}.squashfs"
+
+    # Patch the libvirt XML if not already pointing at squashfs.
+    # Idempotent: only writes if a change is needed.
+    XMLTMP=$(mktemp)
+    sudo virsh dumpxml --inactive "$name" > "$XMLTMP" 2>/dev/null
+    if grep -q "${name}.ext4" "$XMLTMP"; then
+        sed -i "s|${name}.ext4|${name}.squashfs|g" "$XMLTMP"
+        sed -i "s|<cmdline>root=/dev/vda rw mem=512M|<cmdline>root=/dev/vda ro rootfstype=squashfs ftrfs.hostname=${name} mem=512M|" "$XMLTMP"
+        sudo virsh define "$XMLTMP" >/dev/null
+        echo "  ${name}: XML updated to squashfs + ftrfs.hostname=${name}"
+    else
+        echo "  ${name}: XML already configured"
+    fi
+    rm -f "$XMLTMP"
 done
 
-# 3. Inject ftrfs.ko
-echo "[3/8] Injecting ftrfs.ko..."
-sudo mount -o loop /var/lib/libvirt/images/hpc-arm64/arm64-master.ext4 /mnt/arm64-master
-sudo mkdir -p /mnt/arm64-master/lib/modules/7.0.0/updates
-sudo cp $FTRFS_KO /mnt/arm64-master/lib/modules/7.0.0/updates/ftrfs.ko
-echo "  master: $(md5sum /mnt/arm64-master/lib/modules/7.0.0/updates/ftrfs.ko | cut -d' ' -f1)"
-sudo umount /mnt/arm64-master
-
-for node in compute01 compute02 compute03; do
-    sudo mount -o loop /var/lib/libvirt/images/hpc-arm64/arm64-${node}.ext4 /mnt/arm64-master
-    sudo mkdir -p /mnt/arm64-master/lib/modules/7.0.0/updates
-    sudo cp $FTRFS_KO /mnt/arm64-master/lib/modules/7.0.0/updates/ftrfs.ko
-    echo "arm64-${node}" | sudo tee /mnt/arm64-master/etc/hostname > /dev/null
-    echo "  ${node}: $(md5sum /mnt/arm64-master/lib/modules/7.0.0/updates/ftrfs.ko | cut -d' ' -f1)"
-    sudo umount /mnt/arm64-master
+# 3. Start VMs
+echo "[3/7] Starting VMs..."
+for entry in "${NODES_ALL[@]}"; do
+    name="${entry%%:*}"
+    sudo virsh start "$name" >/dev/null
 done
+echo "  Waiting 60s for boot..."
+sleep 60
 
-# 4. Start VMs
-echo "[4/8] Starting VMs..."
-sudo virsh start arm64-master
-sudo virsh start arm64-compute01
-sudo virsh start arm64-compute02
-sudo virsh start arm64-compute03
-echo "  Waiting 90s for boot..."
-sleep 90
+# 4. Per-node post-boot setup: hostname (cmdline-driven, manual fallback),
+#    overlay /etc (since the Yocto preinit wrapper does not run reliably
+#    on this kernel boot path), and FTRFS partition on /dev/vdb.
+echo "[4/7] Setting hostname + overlay /etc + FTRFS on all nodes..."
+for entry in "${NODES_ALL[@]}"; do
+    name="${entry%%:*}"
+    ip="${entry##*:}"
+    $SSH hpcadmin@${ip} "sudo bash -s" << REMOTE_SETUP_EOF &
+set -e
 
-# 5. Start Slurm on master
-echo "[5/8] Starting Slurm controller..."
-$SSH hpcadmin@192.168.56.10 "
-sudo /etc/init.d/munge start
-sudo mkdir -p /var/log/slurm /var/lib/slurm
-sudo chown slurm:slurm /var/log/slurm /var/lib/slurm
+# Apply hostname (idempotent)
+CURRENT=\$(hostname)
+if [ "\$CURRENT" != "${name}" ]; then
+    hostname "${name}"
+fi
+
+# Mount overlay /etc if not already mounted (so we can write to /etc/hostname,
+# /etc/slurm/slurm.conf, etc.). Skipped if /etc is already an overlay.
+if ! mount | grep -q "overlay on /etc type overlay"; then
+    mkdir -p /run/overlay-etc/upper /run/overlay-etc/work /run/overlay-etc/lower
+    mount -o bind,ro /etc /run/overlay-etc/lower 2>/dev/null || true
+    mount -n -t overlay \\
+        -o upperdir=/run/overlay-etc/upper \\
+        -o lowerdir=/etc \\
+        -o workdir=/run/overlay-etc/work \\
+        -o index=off,xino=off,redirect_dir=off,metacopy=off \\
+        overlay /etc
+fi
+
+echo "${name}" > /etc/hostname
+
+# Format and mount FTRFS on /dev/vdb (real partition, not loopback)
+mkdir -p /data
+if ! mount | grep -q "/dev/vdb on /data"; then
+    mkfs.ftrfs /dev/vdb >/dev/null
+    mount -t ftrfs /dev/vdb /data
+fi
+REMOTE_SETUP_EOF
+done
+wait
+
+# 5. Start munge + slurmctld on master
+echo "[5/7] Starting munge + slurmctld on master..."
+$SSH hpcadmin@192.168.56.10 "sudo bash -s" << 'MASTER_EOF'
+set -e
+mkdir -p /var/log/slurm /var/lib/slurm
+chown slurm:slurm /var/log/slurm /var/lib/slurm
+/etc/init.d/munge start >/dev/null
 sudo -u slurm slurmctld
 sleep 3
 sinfo
-"
+MASTER_EOF
 
-# 6. Push slurm.conf + start slurmd on compute nodes
-echo "[6/8] Starting compute nodes..."
+# 6. Push slurm.conf + start munge + slurmd on compute nodes.
+#    Use scp + ssh in two steps because piping content into ssh while
+#    also using a heredoc creates stdin conflict (the heredoc wins,
+#    the piped content is lost).
+echo "[6/7] Starting compute nodes..."
 $SSH hpcadmin@192.168.56.10 "cat /etc/slurm/slurm.conf" > /tmp/slurm.conf
 
-for i in 11 12 13; do
-    cat /tmp/slurm.conf | $SSH hpcadmin@192.168.56.${i} "
-sudo /etc/init.d/munge start
-sudo mkdir -p /var/log/slurm /var/lib/slurm/slurmd
-sudo chown slurm:slurm /var/log/slurm /var/lib/slurm /var/lib/slurm/slurmd
-sudo tee /etc/slurm/slurm.conf > /dev/null
-sudo slurmd
-" 2>/dev/null &
+SCP="scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/.ssh/hpclab_admin"
+
+for entry in "${NODES_COMPUTE[@]}"; do
+    name="${entry%%:*}"
+    ip="${entry##*:}"
+    # Step 1: copy slurm.conf to the compute node's /tmp
+    $SCP /tmp/slurm.conf hpcadmin@${ip}:/tmp/slurm.conf >/dev/null
+    # Step 2: ssh + heredoc to install conf and start slurmd
+    $SSH hpcadmin@${ip} "sudo bash -s" << 'COMPUTE_EOF' &
+set -e
+mkdir -p /var/log/slurm /var/lib/slurm/slurmd
+chown slurm:slurm /var/log/slurm /var/lib/slurm /var/lib/slurm/slurmd
+/etc/init.d/munge start >/dev/null
+cp /tmp/slurm.conf /etc/slurm/slurm.conf
+slurmd
+COMPUTE_EOF
 done
 wait
 sleep 5
 $SSH hpcadmin@192.168.56.10 "sinfo -N -l"
 
-# 7. Mount FTRFS on all nodes
-echo "[7/8] Mounting FTRFS on all nodes..."
-# Master node: mount FTRFS + start ftrfsd in master mode
-$SSH hpcadmin@192.168.56.10 "
-sudo modprobe reed_solomon 2>/dev/null || true
-sudo insmod /lib/modules/7.0.0/updates/ftrfs.ko 2>/dev/null || true
-sudo dd if=/dev/zero of=/tmp/ftrfs.img bs=4096 count=16384 2>/dev/null
-sudo mkfs.ftrfs /tmp/ftrfs.img
-sudo modprobe loop
-sudo losetup /dev/loop0 /tmp/ftrfs.img
-sudo mount -t ftrfs /dev/loop0 /data
-sudo setsid ftrfsd /dev/loop0 --master > /dev/null 2>&1 &
-sleep 3
-dmesg | grep ftrfs | grep -v 'loading out-of-tree'
-" 2>/dev/null
+# 7. (placeholder, was FTRFS mount; now done in phase 4 with /dev/vdb)
+echo "[7/7] FTRFS already mounted on /dev/vdb in phase 4 (real partition)."
 
-# Compute nodes: mount FTRFS + start ftrfsd in peer mode
-for i in 11 12 13; do
-    $SSH hpcadmin@192.168.56.${i} "
-sudo modprobe reed_solomon 2>/dev/null || true
-sudo insmod /lib/modules/7.0.0/updates/ftrfs.ko 2>/dev/null || true
-sudo dd if=/dev/zero of=/tmp/ftrfs.img bs=4096 count=16384 2>/dev/null
-sudo mkfs.ftrfs /tmp/ftrfs.img
-sudo modprobe loop
-sudo losetup /dev/loop0 /tmp/ftrfs.img
-sudo mount -t ftrfs /dev/loop0 /data
-sudo setsid ftrfsd /dev/loop0 --peer 192.168.56.10 > /dev/null 2>&1 &
-sleep 2
-dmesg | grep ftrfs | grep -v 'loading out-of-tree'
-" 2>/dev/null &
-done
-wait
-
-# 8. Benchmark
+# 8. Slurm benchmark (capture + ASCII table)
+#
+# Mesures capturées via /proc/uptime (BusyBox-compatible) côté master.
+# Toute la sortie Slurm est redirigée vers /dev/null pendant la mesure;
+# seule une ligne RESULTS=... est exfiltrée vers le host pour parsing.
 echo ""
-echo "[8/8] Running benchmark..."
-echo "================================================================"
-$SSH hpcadmin@192.168.56.10 "
-echo '--- job submission latency ---'
-time srun --nodes=1 hostname
-time srun --nodes=1 hostname
-time srun --nodes=1 hostname
-echo '--- 3-node parallel job ---'
-time srun --nodes=3 --ntasks=3 hostname
-echo '--- 9-job throughput (BusyBox sh compatible) ---'
-time sh -c '
-srun --nodes=1 hostname &
-srun --nodes=1 hostname &
-srun --nodes=1 hostname &
-srun --nodes=1 hostname &
-srun --nodes=1 hostname &
-srun --nodes=1 hostname &
-srun --nodes=1 hostname &
-srun --nodes=1 hostname &
-srun --nodes=1 hostname &
+echo "[8/8] Running Slurm benchmark on master (4 setup phases + Slurm + FS bench)..."
+
+SLURM_RAW=$($SSH hpcadmin@192.168.56.10 "sh -s" << 'REMOTE_EOF'
+set -u
+
+ts() { read u _ < /proc/uptime; echo $u; }
+dt() { awk "BEGIN{printf \"%.3f\", $2 - $1}" $1 $2; }
+
+# S1 -- job submission latency (1 node, 3 runs)
+S1_VALS=""
+for i in 1 2 3; do
+    T0=$(ts)
+    srun --nodes=1 hostname </dev/null >/dev/null 2>&1
+    T1=$(ts)
+    S1_VALS="$S1_VALS$(dt $T0 $T1) "
+done
+
+# S2 -- 3-node parallel job
+T0=$(ts)
+srun --nodes=3 --ntasks=3 hostname </dev/null >/dev/null 2>&1
+T1=$(ts)
+S2_VAL=$(dt $T0 $T1)
+
+# S3 -- 9-job throughput (BusyBox sh compatible)
+T0=$(ts)
+sh -c '
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
+srun --nodes=1 hostname </dev/null >/dev/null 2>&1 &
 wait
 '
-echo '--- FTRFS write from Slurm job ---'
-srun --nodes=3 --ntasks=3 sh -c 'echo \$(hostname):\$(date) | sudo tee /data/slurm-\$(hostname).txt'
-srun --nodes=3 --ntasks=3 sh -c 'cat /data/slurm-\$(hostname).txt'
-"
+T1=$(ts)
+S3_VAL=$(dt $T0 $T1)
+
+# S4 -- FTRFS write from Slurm job (functional, PASS/FAIL)
+S4_STATUS=PASS
+srun --nodes=3 --ntasks=3 sh -c 'echo $(hostname):$(date) | sudo tee /data/slurm-$(hostname).txt >/dev/null' </dev/null >/dev/null 2>&1 || S4_STATUS=FAIL
+srun --nodes=3 --ntasks=3 sh -c 'cat /data/slurm-$(hostname).txt' </dev/null >/dev/null 2>&1 || S4_STATUS=FAIL
+
+# Single line of results, parsed by host
+echo "RESULTS|$S1_VALS|$S2_VAL|$S3_VAL|$S4_STATUS"
+REMOTE_EOF
+)
+
+# Parse RESULTS line
+RESULTS_LINE=$(echo "$SLURM_RAW" | grep '^RESULTS|' | head -1)
+if [ -z "$RESULTS_LINE" ]; then
+    echo "ERROR: Slurm benchmark did not return results line" >&2
+    echo "Raw output:" >&2
+    echo "$SLURM_RAW" >&2
+    exit 1
+fi
+
+S1_VALS=$(echo "$RESULTS_LINE" | cut -d'|' -f2)
+S2_VAL=$(echo "$RESULTS_LINE" | cut -d'|' -f3)
+S3_VAL=$(echo "$RESULTS_LINE" | cut -d'|' -f4)
+S4_STATUS=$(echo "$RESULTS_LINE" | cut -d'|' -f5)
+
+# Compute min/median/max for S1
+S1_STATS=$(echo "$S1_VALS" | awk '{
+    n = NF
+    for (i = 1; i <= n; i++) v[i] = $i
+    asort(v)
+    mn = v[1]; mx = v[n]
+    if (n % 2) md = v[(n+1)/2]
+    else md = (v[n/2] + v[n/2+1]) / 2
+    printf "%.3f %.3f %.3f", mn, md, mx
+}')
+S1_MIN=$(echo "$S1_STATS" | cut -d' ' -f1)
+S1_MED=$(echo "$S1_STATS" | cut -d' ' -f2)
+S1_MAX=$(echo "$S1_STATS" | cut -d' ' -f3)
+
+# Slurm Results table
+echo ""
+echo "================================================================"
+echo " Slurm Benchmark Results"
+echo "================================================================"
+printf "%-4s  %-30s %10s %10s %10s  %s\n" "ID" "Metric" "Min" "Median" "Max" "Unit"
+printf "%-4s  %-30s %10s %10s %10s  %s\n" "----" "------------------------------" "----------" "----------" "----------" "--------"
+printf "%-4s  %-30s %10s %10s %10s  %s\n" "S1" "Job submit latency (1 node)" "$S1_MIN" "$S1_MED" "$S1_MAX" "seconds"
+printf "%-4s  %-30s %10s %10s %10s  %s\n" "S2" "Parallel job (3 nodes)" "-" "$S2_VAL" "-" "seconds"
+printf "%-4s  %-30s %10s %10s %10s  %s\n" "S3" "Throughput (9 jobs)" "-" "$S3_VAL" "-" "seconds"
+printf "%-4s  %-30s %10s %10s %10s  %s\n" "S4" "FTRFS write from Slurm" "-" "$S4_STATUS" "-" "-"
+echo "================================================================"
+
+# I/O benchmark (separate ASCII table produced by ftrfs-iobench.sh)
+echo ""
+"$(dirname "$0")"/ftrfs-iobench.sh --runs 10
+
+echo ""
 echo "================================================================"
 echo "Benchmark complete -- $(date)"
+echo "================================================================"
