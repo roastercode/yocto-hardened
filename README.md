@@ -66,6 +66,10 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 | 2026-04-25 | Kernel config cleanup: KASAN/UBSAN removed (out-of-tree module mismatch with non-instrumented kernel) |
 | 2026-04-25 | ftrfsd v3: distributed attestation over TCP with Ed25519, master/peer modes, inject_raf helper |
 | 2026-04-25 | 4-node HPC cluster bench re-validated, ftrfsd master+3 peers operational, 0 RS errors, 0 BUG/WARN |
+| 2026-04-26 | FTRFS dirent slot reuse bug fix (dir.c, namei.c, super.c) -- 100-file create+rm completes with zero ENOENT |
+| 2026-04-26 | hpc-arm64-research image: read-only squashfs rootfs + bash/gawk/fio/iperf3 bench tooling |
+| 2026-04-26 | FTRFS mounted as real /dev/vdb partition (no more loopback) on 4-node cluster |
+| 2026-04-26 | hpc-benchmark.sh refactor: deploy squashfs + libvirt XML cmdline injection + ftrfs.hostname= |
 
 ---
 
@@ -156,10 +160,16 @@ cd /usr/xfstests && ./check generic/002 generic/010 generic/098 generic/257
 
 ```bash
 source oe-init-build-env build-qemu-arm64
-bitbake hpc-arm64-master
-bitbake hpc-arm64-compute
+bitbake hpc-arm64-research
 bash bin/hpc-benchmark.sh
 ```
+
+The legacy two-image flow (`bitbake hpc-arm64-master` + `bitbake hpc-arm64-compute`)
+is still supported but deprecated. The new `hpc-arm64-research` image is
+a single all-in-one read-only squashfs that boots interchangeably as
+master or compute (hostname injected via kernel cmdline
+`ftrfs.hostname=<name>`), with FTRFS deployed as a real partition on
+`/dev/vdb`.
 
 ---
 
