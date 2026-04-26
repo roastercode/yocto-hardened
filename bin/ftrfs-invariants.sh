@@ -173,6 +173,43 @@ inv4_ko_symbols() {
 check "ftrfs.ko has expected exported T symbols" inv4_ko_symbols
 
 # --------------------------------------------------------------------
+# Invariant 5: dirent scan loops do not break on d_rec_len == 0.
+# --------------------------------------------------------------------
+# After the dirent slot-reuse fix, dir.c (ftrfs_readdir, ftrfs_lookup)
+# and namei.c (ftrfs_add_dirent, ftrfs_del_dirent, ftrfs_rmdir) must
+# scan directory blocks fully -- they advance by sizeof(*de) and skip
+# free slots (d_ino == 0). The pattern
+#     if (!de->d_rec_len) break;
+# would re-introduce the slot-reuse bug where a hole left by
+# unlink hides live entries that follow it within the same block.
+inv5_dirent_no_break_on_zero() {
+    local hits
+    hits=$(grep -nE '!.*d_rec_len.*\)' \
+                "${FTRFS_SRC}/dir.c" \
+                "${FTRFS_SRC}/namei.c" 2>/dev/null \
+            | grep -vE 'd_rec_len[[:space:]]*=' \
+            || true)
+    if [ -n "$hits" ]; then
+        local bad
+        bad=$(echo "$hits" | while read -r line; do
+            f=$(echo "$line" | cut -d: -f1)
+            n=$(echo "$line" | cut -d: -f2)
+            next=$(sed -n "$((n + 1))p" "$f" 2>/dev/null)
+            if echo "$next" | grep -q "break"; then
+                echo "$line"
+            fi
+        done)
+        if [ -n "$bad" ]; then
+            echo "  Found break-on-zero-rec_len pattern:" >&2
+            echo "$bad" | sed 's/^/    /' >&2
+            return 1
+        fi
+    fi
+    return 0
+}
+check "dirent scan loops do not break on d_rec_len == 0" inv5_dirent_no_break_on_zero
+
+# --------------------------------------------------------------------
 echo "================================================================"
 if [ "$fail" -eq 0 ]; then
     green "All invariants hold."
