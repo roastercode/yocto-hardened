@@ -274,11 +274,13 @@ done
 for metric in M1 M2 M4 M5; do
     : > "$TMPDIR/values-$metric.txt"
     for node in $NODES; do
+        : > "$TMPDIR/values-$metric-$node.txt"
         case "$metric" in
-            M1|M2) awk -v m="$metric" '$1 == m { printf "%.6f\n", 1.0 / $3 }' "$TMPDIR/raw-$node.log" >> "$TMPDIR/values-$metric.txt" ;;
-            M4)    awk -v m="$metric" '$1 == m { printf "%.6f\n", $3 }' "$TMPDIR/raw-$node.log" >> "$TMPDIR/values-$metric.txt" ;;
-            M5)    awk -v m="$metric" '$1 == m { printf "%.6f\n", $3 * 1000 / 10 }' "$TMPDIR/raw-$node.log" >> "$TMPDIR/values-$metric.txt" ;;
+            M1|M2) awk -v m="$metric" '$1 == m { printf "%.6f\n", 1.0 / $3 }' "$TMPDIR/raw-$node.log" >> "$TMPDIR/values-$metric-$node.txt" ;;
+            M4)    awk -v m="$metric" '$1 == m { printf "%.6f\n", $3 }' "$TMPDIR/raw-$node.log" >> "$TMPDIR/values-$metric-$node.txt" ;;
+            M5)    awk -v m="$metric" '$1 == m { printf "%.6f\n", $3 * 1000 / 10 }' "$TMPDIR/raw-$node.log" >> "$TMPDIR/values-$metric-$node.txt" ;;
         esac
+        cat "$TMPDIR/values-$metric-$node.txt" >> "$TMPDIR/values-$metric.txt"
     done
     read MIN MEDIAN MAX STDDEV < <(cat "$TMPDIR/values-$metric.txt" | stats)
     eval "${metric}_MIN=$MIN"
@@ -381,11 +383,44 @@ if [[ $EMIT_JSON -eq 1 ]]; then
         done
         echo ""
         echo "  ],"
+        # Helper: emit comma-separated samples from a file.
+        emit_samples() {
+            local f="$1"
+            awk 'BEGIN{first=1} {
+                if (first) { printf "%s", $1; first=0 }
+                else       { printf ", %s", $1 }
+            }' "$f"
+        }
+        # Helper: emit a full metric object with stats + samples.
+        emit_metric() {
+            local m="$1" unit="$2" trail="$3"
+            local min="$4" median="$5" max="$6" stddev="$7"
+            printf "    \"%s\": {\n" "$m"
+            printf "      \"min\": %.6f,\n" "$min"
+            printf "      \"median\": %.6f,\n" "$median"
+            printf "      \"max\": %.6f,\n" "$max"
+            printf "      \"stddev\": %.6f,\n" "$stddev"
+            printf "      \"unit\": \"%s\",\n" "$unit"
+            printf "      \"samples\": ["
+            emit_samples "$TMPDIR/values-$m.txt"
+            printf "],\n"
+            printf "      \"samples_per_node\": {\n"
+            local first_n=1
+            for n in $NODES; do
+                [[ $first_n -eq 0 ]] && printf ",\n"
+                printf "        \"%s\": [" "$n"
+                emit_samples "$TMPDIR/values-$m-$n.txt"
+                printf "]"
+                first_n=0
+            done
+            printf "\n      }\n"
+            printf "    }%s\n" "$trail"
+        }
         echo "  \"results\": {"
-        printf "    \"M1\": {\"min\": %.6f, \"median\": %.6f, \"max\": %.6f, \"stddev\": %.6f, \"unit\": \"MB/s\"},\n"  "$M1_MIN" "$M1_MEDIAN" "$M1_MAX" "$M1_STDDEV"
-        printf "    \"M2\": {\"min\": %.6f, \"median\": %.6f, \"max\": %.6f, \"stddev\": %.6f, \"unit\": \"MB/s\"},\n"  "$M2_MIN" "$M2_MEDIAN" "$M2_MAX" "$M2_STDDEV"
-        printf "    \"M4\": {\"min\": %.6f, \"median\": %.6f, \"max\": %.6f, \"stddev\": %.6f, \"unit\": \"seconds\"},\n" "$M4_MIN" "$M4_MEDIAN" "$M4_MAX" "$M4_STDDEV"
-        printf "    \"M5\": {\"min\": %.6f, \"median\": %.6f, \"max\": %.6f, \"stddev\": %.6f, \"unit\": \"ms/file\"}\n"  "$M5_MIN" "$M5_MEDIAN" "$M5_MAX" "$M5_STDDEV"
+        emit_metric "M1" "MB/s"    "," "$M1_MIN" "$M1_MEDIAN" "$M1_MAX" "$M1_STDDEV"
+        emit_metric "M2" "MB/s"    "," "$M2_MIN" "$M2_MEDIAN" "$M2_MAX" "$M2_STDDEV"
+        emit_metric "M4" "seconds" "," "$M4_MIN" "$M4_MEDIAN" "$M4_MAX" "$M4_STDDEV"
+        emit_metric "M5" "ms/file" ""  "$M5_MIN" "$M5_MEDIAN" "$M5_MAX" "$M5_STDDEV"
         echo "  }"
         echo "}"
     } > "$JSON_PATH"
