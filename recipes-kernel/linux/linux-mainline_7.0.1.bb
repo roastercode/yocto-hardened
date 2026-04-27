@@ -1,21 +1,25 @@
-SUMMARY = "Linux kernel 7.0-rc7 (Linus Torvalds mainline)"
-DESCRIPTION = "Linux mainline kernel tracking Linus's tree"
+SUMMARY = "Linux kernel 7.0.1 stable (kernel.org linux-7.0.y branch)"
+DESCRIPTION = "Linux 7.0 stable kernel from kernel.org linux-stable.git, branch linux-7.0.y"
 SECTION = "kernel"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
 inherit kernel
 
-SRCREV = "028ef9c96e96197026887c0f092424679298aae8"
-KBRANCH = "master"
+# CVE exclusions: 88 pre-v7.0 CVEs marked as fixed-version (Patched)
+# See cve-exclusions-kernel.inc for justification.
+require cve-exclusions-kernel.inc
 
-SRC_URI = "git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git;branch=master;protocol=https"
+SRCREV = "3cb1fb7a56d2fd8011f5282bc170c0d23dc1f4b5"
+KBRANCH = "linux-7.0.y"
+
+SRC_URI = "git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git;branch=linux-7.0.y;protocol=https"
 
 S = "${WORKDIR}/git"
 
-LINUX_VERSION = "7.0-rc7"
+LINUX_VERSION = "7.0.1"
 LINUX_VERSION_EXTENSION = "-mainline"
-PV = "7.0+rc7"
+PV = "7.0.1"
 
 KERNEL_FEATURES:append = " cfg/fs/vfat.scc"
 
