@@ -231,3 +231,16 @@ Aurelien DESBRIERES `<aurelien@hackers.camp>`
 
 *Part of the FTRFS ecosystem:*
 *[github.com/roastercode/FTRFS](https://github.com/roastercode/FTRFS)*
+
+---
+
+## Scope (2026-04-29)
+
+**This layer does NOT carry BEAMFS.** BEAMFS development happens
+exclusively in `roastercode/yocto-beamfs`. See
+`recipes-kernel/beamfs/.scope-note.md` for the architectural rationale.
+
+`yocto-hardened` retains its FTRFS legacy + SELinux + dm-verity
+production-grade hardening role. BEAMFS may return here in a future
+production-deployment phase, when the filesystem reaches upstream
+maturity.
