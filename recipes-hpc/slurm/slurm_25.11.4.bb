@@ -1,5 +1,5 @@
 SUMMARY = "Slurm Workload Manager"
-DESCRIPTION = "Slurm — ordonnanceur de jobs HPC"
+DESCRIPTION = "Slurm - ordonnanceur de jobs HPC"
 HOMEPAGE = "https://slurm.schedmd.com"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=1d61dca3f6cbd0e6c847641f8fd4c233"
@@ -85,7 +85,7 @@ do_install:append() {
     rm -f ${D}/usr/lib/slurm/mpi_cray_shasta.so
 
     # Supprimer prep_script.so : symbole send_slurmd_conf_lite
-    # uniquement dans slurmd, pas exporté par libslurm — bug cross-compile
+    # uniquement dans slurmd, pas exporté par libslurm - bug cross-compile
     rm -f ${D}/usr/lib/slurm/prep_script.so
 
     # Slurm installe les binaires avec le préfixe cross-compilateur
@@ -107,7 +107,7 @@ do_install:append() {
 do_install:append() {
 }
 
-# buildpaths in DWARF debug info and binaries — unavoidable in cross-compile
+# buildpaths in DWARF debug info and binaries - unavoidable in cross-compile
 INSANE_SKIP:${PN} += "buildpaths"
 INSANE_SKIP:${PN}-dbg += "buildpaths"
 INSANE_SKIP:${PN}-slurmctld += "buildpaths"

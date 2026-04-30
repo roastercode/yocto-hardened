@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * FTRFS — Block and inode allocator
+ * FTRFS - Block and inode allocator
  * Author: Aurelien DESBRIERES <aurelien@hackers.camp>
  *
  * Both block and inode allocators use in-memory bitmaps loaded at mount
@@ -31,7 +31,7 @@
 /* ------------------------------------------------------------------ */
 
 /*
- * ftrfs_setup_bitmap — allocate and initialize in-memory bitmaps
+ * ftrfs_setup_bitmap - allocate and initialize in-memory bitmaps
  *
  * Called from ftrfs_fill_super() after the superblock is read.
  *
@@ -199,7 +199,7 @@ int ftrfs_setup_bitmap(struct super_block *sb)
 }
 
 /*
- * ftrfs_write_bitmap — flush in-memory block bitmap to disk with RS FEC
+ * ftrfs_write_bitmap - flush in-memory block bitmap to disk with RS FEC
  *
  * Encodes each 239-byte data subblock with 16 bytes of RS parity and
  * marks the bitmap buffer dirty. Called under s_lock.
@@ -240,7 +240,7 @@ int ftrfs_write_bitmap(struct super_block *sb)
 }
 
 /*
- * ftrfs_destroy_bitmap — free in-memory bitmaps at umount
+ * ftrfs_destroy_bitmap - free in-memory bitmaps at umount
  */
 void ftrfs_destroy_bitmap(struct super_block *sb)
 {
@@ -265,7 +265,7 @@ void ftrfs_destroy_bitmap(struct super_block *sb)
 /* ------------------------------------------------------------------ */
 
 /*
- * ftrfs_alloc_block — allocate a free data block
+ * ftrfs_alloc_block - allocate a free data block
  *
  * Returns absolute block number (>= s_data_start) on success,
  * or 0 on failure (block 0 is the superblock, never a valid data block).
@@ -308,7 +308,7 @@ u64 ftrfs_alloc_block(struct super_block *sb)
 }
 
 /*
- * ftrfs_free_block — return a data block to the free pool
+ * ftrfs_free_block - return a data block to the free pool
  */
 void ftrfs_free_block(struct super_block *sb, u64 block)
 {
@@ -348,7 +348,7 @@ void ftrfs_free_block(struct super_block *sb, u64 block)
 /* ------------------------------------------------------------------ */
 
 /*
- * ftrfs_alloc_inode_num — allocate a free inode number
+ * ftrfs_alloc_inode_num - allocate a free inode number
  *
  * Uses the in-memory inode bitmap. No I/O performed, no sb_bread under
  * spinlock.
@@ -396,7 +396,7 @@ u64 ftrfs_alloc_inode_num(struct super_block *sb)
 }
 
 /*
- * ftrfs_free_inode_num — return an inode number to the free pool
+ * ftrfs_free_inode_num - return an inode number to the free pool
  *
  * Called from evict_inode path when nlink drops to 0.
  */

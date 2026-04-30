@@ -1,4 +1,4 @@
-SUMMARY = "FTRFS — Fault-Tolerant Radiation-Robust Filesystem kernel module"
+SUMMARY = "FTRFS - Fault-Tolerant Radiation-Robust Filesystem kernel module"
 DESCRIPTION = "Out-of-tree Linux kernel module implementing FTRFS. \
 Based on: Fuchs, Langer, Trinitis - ARCS 2015 (TU Munich)"
 LICENSE = "GPL-2.0-only"

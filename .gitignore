@@ -1,4 +1,4 @@
-# Secrets — never commit these
+# Secrets - never commit these
 recipes-core/images/credentials.inc
 recipes-core/images/files/munge.key
 recipes-core/images/files/hpclab_admin

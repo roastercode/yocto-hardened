@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
-# FTRFS — Fault-Tolerant Radiation-Robust Filesystem
+# FTRFS - Fault-Tolerant Radiation-Robust Filesystem
 #
 
 obj-$(CONFIG_FTRFS_FS) += ftrfs.o

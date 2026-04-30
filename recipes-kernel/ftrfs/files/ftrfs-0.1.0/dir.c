@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * FTRFS — Directory operations
+ * FTRFS - Directory operations
  * Author: Aurelien DESBRIERES <aurelien@hackers.camp>
  */
 #include <linux/fs.h>
@@ -8,7 +8,7 @@
 #include "ftrfs.h"
 
 /*
- * ftrfs_readdir — iterate directory entries
+ * ftrfs_readdir - iterate directory entries
  *
  * ctx->pos encoding:
  *   0, 1       : '.' and '..' (emitted by dir_emit_dots)
@@ -114,7 +114,7 @@ static int ftrfs_readdir(struct file *file, struct dir_context *ctx)
 }
 
 /*
- * ftrfs_lookup — find dentry in directory
+ * ftrfs_lookup - find dentry in directory
  */
 struct dentry *ftrfs_lookup(struct inode *dir,
 			    struct dentry *dentry,

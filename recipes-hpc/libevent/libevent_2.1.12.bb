@@ -1,5 +1,5 @@
 SUMMARY = "Event notification library"
-DESCRIPTION = "libevent — dépendance de munge et slurm"
+DESCRIPTION = "libevent - dépendance de munge et slurm"
 HOMEPAGE = "https://libevent.org"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=17f20574c0b154d12236d5fbe964f549"

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only
- * mkfs.ftrfs — format a block device or image as FTRFS
+ * mkfs.ftrfs - format a block device or image as FTRFS
  * Author: roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
  *
  * Usage: mkfs.ftrfs [-N inodes] <device_or_image>
@@ -75,7 +75,7 @@ static void crc32_init(void)
 }
 
 /*
- * crc32_internal — compute CRC32, returning the raw internal state (no XOR).
+ * crc32_internal - compute CRC32, returning the raw internal state (no XOR).
  * seed: initial internal state (0xFFFFFFFF for first block, carry for chaining)
  */
 static uint32_t crc32_internal(uint32_t seed, const void *buf, size_t len)
@@ -128,7 +128,7 @@ struct ftrfs_super_block {
 } __attribute__((packed));
 
 /*
- * crc32_sb — CRC32 over superblock fields matching ftrfs_crc32_sb() in kernel.
+ * crc32_sb - CRC32 over superblock fields matching ftrfs_crc32_sb() in kernel.
  *
  * Coverage (computed at compile time from struct layout):
  *   region A: [0, offsetof(s_crc32))         -- magic, counters,
@@ -246,7 +246,7 @@ static void encode_rs_userspace(const uint8_t *data, size_t data_len,
 }
 
 /*
- * rs_encode_bitmap — protect 239-byte subblocks with 16-byte RS parity.
+ * rs_encode_bitmap - protect 239-byte subblocks with 16-byte RS parity.
  *
  * Exact reproduction of lib/reed_solomon encode_rs8() with parameters:
  *   init_rs(8, 0x187, fcr=0, prim=1, nroots=16)
@@ -277,7 +277,7 @@ static void rs_encode_bitmap(uint8_t *block)
 	alpha_to[nn] = 0;
 	index_of[0]  = nn;
 
-	/* Build generator polynomial in index form — exactly codec_init() */
+	/* Build generator polynomial in index form - exactly codec_init() */
 	/* fcr=0, prim=1: roots are alpha^0 .. alpha^15 */
 	uint16_t gp[17];
 	memset(gp, 0, sizeof(gp));
@@ -300,7 +300,7 @@ static void rs_encode_bitmap(uint8_t *block)
 	for (i = 0; i <= 16; i++)
 		genpoly[i] = index_of[gp[i]];
 
-	/* Encode each subblock — exactly encode_rs.c LFSR */
+	/* Encode each subblock - exactly encode_rs.c LFSR */
 	for (int k = 0; k < FTRFS_BITMAP_SUBBLOCKS; k++) {
 		uint8_t  *data   = block + k * FTRFS_SUBBLOCK_TOTAL;
 		uint16_t  par[16];
@@ -588,7 +588,7 @@ int main(int argc, char *argv[])
 		write_block(fd, inode_table_blk + i, zero);
 
 	/*
-	 * Write bitmap block — all bits set (= all blocks free).
+	 * Write bitmap block - all bits set (= all blocks free).
 	 * 16 subblocks of 239 data bytes each, each followed by 16 bytes
 	 * of RS(255,239) parity. Total: 16 * 255 = 4080 bytes, 16 unused.
 	 */

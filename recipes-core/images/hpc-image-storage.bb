@@ -1,4 +1,4 @@
-SUMMARY = "Image HPC — nœud storage NFS"
+SUMMARY = "Image HPC - nœud storage NFS"
 LICENSE = "MIT"
 IMAGE_LINK_NAME = "hpc-image-storage-${MACHINE}"
 inherit core-image dm-verity-image selinux-image

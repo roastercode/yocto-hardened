@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * FTRFS — EDAC layer: CRC32 + Reed-Solomon FEC
+ * FTRFS - EDAC layer: CRC32 + Reed-Solomon FEC
  * Author: Aurelien DESBRIERES <aurelien@hackers.camp>
  *
  * Reed-Solomon encoding/decoding uses the kernel's lib/reed_solomon
@@ -24,11 +24,11 @@
 #include <linux/rslib.h>
 #include "ftrfs.h"
 
-/* RS codec handle — allocated once at module init */
+/* RS codec handle - allocated once at module init */
 static struct rs_control *ftrfs_rs_ctrl;
 
 /*
- * ftrfs_rs_init_tables — initialize the RS codec
+ * ftrfs_rs_init_tables - initialize the RS codec
  * Called once from ftrfs_init() before any mount.
  */
 void ftrfs_rs_init_tables(void)
@@ -50,7 +50,7 @@ void ftrfs_rs_init_tables(void)
 }
 
 /*
- * ftrfs_rs_exit — release the RS codec at module exit
+ * ftrfs_rs_exit - release the RS codec at module exit
  */
 void ftrfs_rs_exit_tables(void)
 {
@@ -61,7 +61,7 @@ void ftrfs_rs_exit_tables(void)
 }
 
 /*
- * ftrfs_rs_encode — encode @len data bytes, produce FTRFS_RS_PARITY parity
+ * ftrfs_rs_encode - encode @len data bytes, produce FTRFS_RS_PARITY parity
  * @data:   input data (@len bytes, must be <= FTRFS_SUBBLOCK_DATA)
  * @len:    number of data bytes (FTRFS_SUBBLOCK_DATA for the bitmap path,
  *          FTRFS_INODE_RS_DATA for inodes, etc.)
@@ -96,7 +96,7 @@ int ftrfs_rs_encode(uint8_t *data, size_t len, uint8_t *parity)
 }
 
 /*
- * ftrfs_rs_decode — decode and correct a shortened RS codeword in place
+ * ftrfs_rs_decode - decode and correct a shortened RS codeword in place
  * @data:   data bytes (@len bytes), corrected in place on success
  * @len:    number of data bytes (must match the length passed to encode)
  * @parity: parity bytes (FTRFS_RS_PARITY)
@@ -217,7 +217,7 @@ int ftrfs_rs_decode_region(u8 *data_buf, size_t data_stride,
 }
 
 /*
- * ftrfs_crc32 — compute CRC32 checksum
+ * ftrfs_crc32 - compute CRC32 checksum
  * @buf: data buffer
  * @len: length in bytes
  *

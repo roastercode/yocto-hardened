@@ -1,4 +1,4 @@
-# yocto-hardened — FTRFS HPC cluster + trust substrate
+# yocto-hardened - FTRFS HPC cluster + trust substrate
 
 Yocto BSP layer for radiation-hardened embedded Linux on arm64.
 Counterpart of the [FTRFS kernel filesystem](https://github.com/roastercode/FTRFS),
@@ -45,7 +45,7 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 |------|-----------|
 | 2026-04-12 | RFC v3 submitted to linux-fsdevel |
 | 2026-04-17 | On-disk bitmap block with RS FEC implemented and validated |
-| 2026-04-17 | FTRFS mounts cleanly on arm64 kernel 7.0 — zero RS errors |
+| 2026-04-17 | FTRFS mounts cleanly on arm64 kernel 7.0 - zero RS errors |
 | 2026-04-17 | xfstests Yocto recipe added (hpc-arm64-xfstests image) |
 | 2026-04-18 | inode bitmap consistency fixed (bitmap_weight at mount) |
 | 2026-04-18 | evict_inode: zero i_mode on disk before clear_inode() |
@@ -55,7 +55,7 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 | 2026-04-18 | mkfs.ftrfs -N option, default 256 inodes |
 | 2026-04-18 | Single indirect block support (~2 MiB per file) |
 | 2026-04-18 | Data block free on delete (ftrfs_free_data_blocks) |
-| 2026-04-18 | xfstests generic/002, 010, 098, 257 PASS — 0 BUG/WARN |
+| 2026-04-18 | xfstests generic/002, 010, 098, 257 PASS - 0 BUG/WARN |
 | 2026-04-20 | edac.c: migrate RS FEC to lib/reed_solomon (Eric Biggers review) |
 | 2026-04-21 | ftrfsd: RAF monitor daemon, deployed on 4-node arm64 cluster |
 | 2026-04-21 | trust substrate prototype initiated (later merged into arm64-ftrfs) |
@@ -75,11 +75,11 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 
 ## What this layer provides
 
-- **FTRFS kernel module** — RS(255,239) FEC, CRC32, Radiation Event Journal,
+- **FTRFS kernel module** - RS(255,239) FEC, CRC32, Radiation Event Journal,
   indirect blocks (~2 MiB/file), iomap IO path.
   See [github.com/roastercode/FTRFS](https://github.com/roastercode/FTRFS)
 
-- **ftrfsd v3** — Radiation Event Journal monitor daemon with Ed25519
+- **ftrfsd v3** - Radiation Event Journal monitor daemon with Ed25519
   per-node attestation and cluster-wide signed event propagation over TCP.
   Three modes: standalone (local syslog), `--master` (TCP listener on
   port 7700), `--peer <master_ip>` (connects to master, signs and forwards
@@ -90,13 +90,13 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
   superblock for end-to-end test of the signature/propagation chain.
   Second brick of the trust substrate for autonomous distributed systems.
 
-- **Slurm 25.11.4** — HPC workload manager, cross-compiled for arm64
+- **Slurm 25.11.4** - HPC workload manager, cross-compiled for arm64
 
-- **Munge 0.5.18** — authentication service for Slurm
+- **Munge 0.5.18** - authentication service for Slurm
 
-- **PMIx 5.0.3** — process management interface for HPC workloads
+- **PMIx 5.0.3** - process management interface for HPC workloads
 
-- **xfstests image** — `hpc-arm64-xfstests` with GNU grep, GNU hostname,
+- **xfstests image** - `hpc-arm64-xfstests` with GNU grep, GNU hostname,
   xfstests, mkfs.ftrfs -N 256, fsck.ftrfs stub
 
 ---
@@ -112,7 +112,7 @@ Pedro Falcato (SUSE), Gao Xiang. Covered by Phoronix.
 | ftrfsd RAF monitor (all 4 nodes) | ✅ running |
 | dmesg BUG/WARN/Oops | 0 |
 
-Re-validated 2026-04-25 — same configuration, same FTRFS sources after
+Re-validated 2026-04-25 - same configuration, same FTRFS sources after
 upstream sync, ftrfsd v3 master+3 peers operational on the 4 nodes.
 Functional behavior consistent with the reference run; zero RS errors,
 zero BUG/WARN/Oops in dmesg.
@@ -122,7 +122,7 @@ zero BUG/WARN/Oops in dmesg.
 | Test | Result | Notes |
 |------|--------|-------|
 | generic/002 | ✅ PASS | file create/delete |
-| generic/010 | ✅ PASS | dbm — indirect blocks |
+| generic/010 | ✅ PASS | dbm - indirect blocks |
 | generic/098 | ✅ PASS | pwrite at offset > 48 KiB |
 | generic/257 | ✅ PASS | directory d_off uniqueness |
 | generic/001 | env limit | needs >2 GiB test image (not a FTRFS bug) |
@@ -156,7 +156,7 @@ cd /usr/xfstests && ./check generic/002 generic/010 generic/098 generic/257
 
 ---
 
-## Quick start — HPC cluster
+## Quick start - HPC cluster
 
 ```bash
 source oe-init-build-env build-qemu-arm64
@@ -190,11 +190,11 @@ master or compute (hostname injected via kernel cmdline
 
 ## Press & community coverage
 
-- Phoronix — *FTRFS: New Fault-Tolerant File-System Proposed For Linux* (2026-04-13):
+- Phoronix - *FTRFS: New Fault-Tolerant File-System Proposed For Linux* (2026-04-13):
   https://www.phoronix.com/news/FTRFS-Linux-File-System
-- Phoronix — *Linux 7.1 Staging* (FTRFS mention):
+- Phoronix - *Linux 7.1 Staging* (FTRFS mention):
   https://www.phoronix.com/news/Linux-7.1-Staging
-- LWN.net — *ftrfs: Fault-Tolerant Radiation-Robust Filesystem*:
+- LWN.net - *ftrfs: Fault-Tolerant Radiation-Robust Filesystem*:
   https://lwn.net/Articles/1067452/
 - daily.dev:
   https://app.daily.dev/posts/ftrfs-new-fault-tolerant-file-system-proposed-for-linux-m5rbha19y
@@ -208,7 +208,7 @@ master or compute (hostname injected via kernel cmdline
   https://x.com/jreuben1/status/2043912800376889429
 - Telegram Linuxgram (2026-04-13):
   https://t.me/s/linuxgram?before=18454
-- YouTube — Genai Linux News:
+- YouTube - Genai Linux News:
   https://www.youtube.com/watch?v=EKA93IBcCvk
 
 RFC threads on lore.kernel.org:
@@ -221,7 +221,7 @@ RFC threads on lore.kernel.org:
 
 ## License
 
-MIT — see `LICENSE`.
+MIT - see `LICENSE`.
 
 ## Maintainer
 

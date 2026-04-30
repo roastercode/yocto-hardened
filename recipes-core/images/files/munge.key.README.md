@@ -1,4 +1,4 @@
-# munge.key — TEST KEY, NOT FOR PRODUCTION
+# munge.key - TEST KEY, NOT FOR PRODUCTION
 
 This file is a 1024-byte random key used by the MUNGE authentication
 service in the reference QEMU HPC cluster (master + 3 compute nodes).

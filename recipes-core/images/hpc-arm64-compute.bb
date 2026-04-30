@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 #
-# hpc-arm64-compute.bb — arm64 HPC compute node image
+# hpc-arm64-compute.bb - arm64 HPC compute node image
 #
 # Builds a hardened arm64 image for Slurm compute nodes.
 # FTRFS is mounted as a dedicated data partition (/dev/vdb).
@@ -13,7 +13,7 @@
 # Build:
 #   bitbake hpc-arm64-compute
 
-SUMMARY = "HPC arm64 compute node — hardened image with FTRFS"
+SUMMARY = "HPC arm64 compute node - hardened image with FTRFS"
 LICENSE = "MIT"
 
 IMAGE_LINK_NAME = "hpc-arm64-compute-${MACHINE}"
@@ -120,7 +120,7 @@ preseed_munge_key() {
     chown 0:0 ${IMAGE_ROOTFS}/etc/munge
 }
 
-# Set hostname and /etc/hosts — compute nodes share the same image,
+# Set hostname and /etc/hosts - compute nodes share the same image,
 # hostname is set at first boot via cloud-init or manual configuration.
 # Default to compute01 for QEMU single-node testing.
 ROOTFS_POSTPROCESS_COMMAND:append = " setup_hostname_compute;"

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * FTRFS — Fault-Tolerant Radiation-Robust Filesystem
- * Based on: Fuchs, Langer, Trinitis — ARCS 2015
+ * FTRFS - Fault-Tolerant Radiation-Robust Filesystem
+ * Based on: Fuchs, Langer, Trinitis - ARCS 2015
  *
  * Author: roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
  */
@@ -80,7 +80,7 @@
 #define FTRFS_DINDIRECT_BLOCKS 1
 
 /*
- * Radiation Event Journal entry — 24 bytes
+ * Radiation Event Journal entry - 24 bytes
  * Records each RS FEC correction event persistently in the superblock.
  * 64 entries give operators a map of physical degradation over time.
  * No existing Linux filesystem provides this at the block layer.
@@ -149,7 +149,7 @@ struct ftrfs_rs_event {
 #define FTRFS_FEAT_RO_COMPAT_SUPP   0ULL
 
 /*
- * On-disk superblock — block 0
+ * On-disk superblock - block 0
  * Total size: fits in one 4096-byte block
  */
 struct ftrfs_super_block {

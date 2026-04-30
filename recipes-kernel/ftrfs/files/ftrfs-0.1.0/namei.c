@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * FTRFS — Filename / directory entry operations
+ * FTRFS - Filename / directory entry operations
  * Author: Aurélien DESBRIERES <aurelien@hackers.camp>
  *
  * Implements: create, mkdir, unlink, rmdir, link, rename
@@ -277,7 +277,7 @@ struct inode *ftrfs_new_inode(struct inode *dir, umode_t mode)
 }
 
 /* ------------------------------------------------------------------ */
-/* create — create a regular file                                       */
+/* create - create a regular file                                       */
 /* ------------------------------------------------------------------ */
 
 static int ftrfs_create(struct mnt_idmap *idmap, struct inode *dir,
@@ -313,7 +313,7 @@ out_iput:
 }
 
 /* ------------------------------------------------------------------ */
-/* mkdir — create a directory                                          */
+/* mkdir - create a directory                                          */
 /* ------------------------------------------------------------------ */
 
 static struct dentry *ftrfs_mkdir(struct mnt_idmap *idmap, struct inode *dir,
@@ -368,7 +368,7 @@ out_fail:
 }
 
 /* ------------------------------------------------------------------ */
-/* unlink — remove a file                                              */
+/* unlink - remove a file                                              */
 /* ------------------------------------------------------------------ */
 
 static int ftrfs_unlink(struct inode *dir, struct dentry *dentry)
@@ -387,7 +387,7 @@ static int ftrfs_unlink(struct inode *dir, struct dentry *dentry)
 }
 
 /* ------------------------------------------------------------------ */
-/* rmdir — remove an empty directory                                   */
+/* rmdir - remove an empty directory                                   */
 /* ------------------------------------------------------------------ */
 
 static int ftrfs_rmdir(struct inode *dir, struct dentry *dentry)
@@ -404,7 +404,7 @@ static int ftrfs_rmdir(struct inode *dir, struct dentry *dentry)
 	/*
 	 * Verify the directory is empty: scan all direct blocks and check
 	 * that no entries other than '.' and '..' exist. Testing i_nlink > 2
-	 * is insufficient — regular files do not increment nlink on the parent,
+	 * is insufficient - regular files do not increment nlink on the parent,
 	 * so a directory with only files can have nlink == 2 but still be
 	 * non-empty.
 	 */
@@ -450,7 +450,7 @@ static int ftrfs_rmdir(struct inode *dir, struct dentry *dentry)
 }
 
 /* ------------------------------------------------------------------ */
-/* link — create a hard link                                           */
+/* link - create a hard link                                           */
 /* ------------------------------------------------------------------ */
 
 static int ftrfs_link(struct dentry *old_dentry, struct inode *dir,
@@ -476,7 +476,7 @@ static int ftrfs_link(struct dentry *old_dentry, struct inode *dir,
 }
 
 /* ------------------------------------------------------------------ */
-/* write_inode — VFS super_op: persist inode to disk                  */
+/* write_inode - VFS super_op: persist inode to disk                  */
 /* ------------------------------------------------------------------ */
 
 int ftrfs_write_inode(struct inode *inode, struct writeback_control *wbc)
@@ -485,11 +485,11 @@ int ftrfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 }
 
 /* ------------------------------------------------------------------ */
-/* dir inode_operations — exported                                     */
+/* dir inode_operations - exported                                     */
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/* rename — move/rename a directory entry                              */
+/* rename - move/rename a directory entry                              */
 /* ------------------------------------------------------------------ */
 
 static int ftrfs_rename(struct mnt_idmap *idmap,

@@ -1,6 +1,6 @@
 # FTRFS Integration Guide
 
-This document covers FTRFS integration in the HPC cluster images —
+This document covers FTRFS integration in the HPC cluster images -
 how it is built, deployed, and validated.
 
 ---
@@ -17,7 +17,7 @@ on the block allocation bitmap.
 ```
 Block 0      superblock (CRC32 verified, covers s_bitmap_blk)
 Block 1-4    inode table
-Block 5      bitmap block — RS(255,239) FEC protected
+Block 5      bitmap block - RS(255,239) FEC protected
 Block 6      root directory data
 Block 7+     data blocks
 ```
@@ -93,7 +93,7 @@ ftrfs: mounted (blocks=16384 free=16377 inodes=64)
 ```
 
 Any `uncorrectable` message indicates a mismatch between mkfs parity
-and the kernel RS parameters — rebuild `mkfs-ftrfs`.
+and the kernel RS parameters - rebuild `mkfs-ftrfs`.
 
 ---
 

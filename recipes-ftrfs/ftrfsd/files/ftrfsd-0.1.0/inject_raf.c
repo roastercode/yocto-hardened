@@ -1,4 +1,4 @@
-/* inject_raf.c — inject a valid RAF event into a FTRFS superblock
+/* inject_raf.c - inject a valid RAF event into a FTRFS superblock
  * Usage: inject_raf <device> <block_no> <err_bits>
  * Writes a valid ftrfs_rs_event at the current journal head position.
  */

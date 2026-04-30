@@ -6,7 +6,7 @@ common pitfalls that cost hours of debugging.
 
 ---
 
-## Prerequisites — files that MUST exist before building
+## Prerequisites - files that MUST exist before building
 
 These files are excluded from git (`.gitignore`) and must be created locally
 before the first build. The build will succeed without them but the images
@@ -36,7 +36,7 @@ cp /tmp/munge.key \
 ```bash
 cp ~/yocto/poky/meta-custom/recipes-core/images/credentials.inc.example \
    ~/yocto/poky/meta-custom/recipes-core/images/credentials.inc
-# Default hash = password "root" — lab/QEMU only
+# Default hash = password "root" - lab/QEMU only
 # For production: openssl passwd -6 yourpassword
 # Each $ must be escaped as \$ in the BitBake file
 ```
@@ -91,13 +91,13 @@ sudo umount /mnt/arm64-master
 | `authorized_keys: No such file` | `hpclab_admin.pub` absent du layer | `cp ~/.ssh/hpclab_admin.pub .../files/` |
 | `munge.key: No such file` | `munge.key` absent du layer | Régénérer et copier |
 | `root:*:...` dans shadow | `debug-tweaks` absent + pas de credentials.inc | Copier `credentials.inc.example` |
-| `hpcadmin:/bin/bash` dans passwd | Ancienne image — rebuild requis | `bitbake hpc-arm64-master hpc-arm64-compute` |
+| `hpcadmin:/bin/bash` dans passwd | Ancienne image - rebuild requis | `bitbake hpc-arm64-master hpc-arm64-compute` |
 
 ---
 
 ## Known constraints
 
-- The shell in the image is BusyBox `/bin/sh` — bash syntax (`for i in $(seq ...)`) does not work
-- `/bin/bash` does not exist — hpcadmin must use `/bin/sh` or SSH will refuse the connection
-- `read-only-rootfs` is active — `/home`, `/etc` are read-only after boot
+- The shell in the image is BusyBox `/bin/sh` - bash syntax (`for i in $(seq ...)`) does not work
+- `/bin/bash` does not exist - hpcadmin must use `/bin/sh` or SSH will refuse the connection
+- `read-only-rootfs` is active - `/home`, `/etc` are read-only after boot
 - `overlayfs-etc` mounts `/etc` as tmpfs overlay on `/data` at boot
