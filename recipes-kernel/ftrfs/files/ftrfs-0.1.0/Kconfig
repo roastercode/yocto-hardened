@@ -29,7 +29,7 @@ config FTRFS_FS
 	  design constraint: the codebase targets under 5000 auditable lines.
 
 	  Originally described in:
-	  Fuchs, Langer, Trinitis - ARCS 2015, TU Munich / MOVE-II CubeSat.
+	  Fuchs, Langer, Trinitis — ARCS 2015, TU Munich / MOVE-II CubeSat.
 	  https://www.cfuchs.net/chris/publication-list/ARCS2015/FTRFS.pdf
 
 	  To compile as a module, choose M. The module will be called ftrfs.

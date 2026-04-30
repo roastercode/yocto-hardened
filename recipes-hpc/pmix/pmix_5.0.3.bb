@@ -1,5 +1,5 @@
 SUMMARY = "Process Management Interface for HPC"
-DESCRIPTION = "PMIx - interface de gestion de processus pour Slurm"
+DESCRIPTION = "PMIx — interface de gestion de processus pour Slurm"
 HOMEPAGE = "https://pmix.org"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=5f7c7fac9e43225b46f4050e0f253133"

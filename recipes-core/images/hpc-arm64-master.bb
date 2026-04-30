@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 #
-# hpc-arm64-master.bb - arm64 HPC master/login node image
+# hpc-arm64-master.bb — arm64 HPC master/login node image
 #
 # Builds a hardened arm64 image for the Slurm controller node.
 # FTRFS is mounted as a dedicated data partition (/dev/vdb).
@@ -13,7 +13,7 @@
 # Build:
 #   bitbake hpc-arm64-master
 
-SUMMARY = "HPC arm64 master/login node - hardened image with FTRFS"
+SUMMARY = "HPC arm64 master/login node — hardened image with FTRFS"
 LICENSE = "MIT"
 
 IMAGE_LINK_NAME = "hpc-arm64-master-${MACHINE}"

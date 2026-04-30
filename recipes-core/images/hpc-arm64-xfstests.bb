@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 #
-# hpc-arm64-xfstests.bb - arm64 xfstests image for FTRFS validation
+# hpc-arm64-xfstests.bb — arm64 xfstests image for FTRFS validation
 #
 # Minimal image containing xfstests and its dependencies.
 # Used to run generic/001,002,010,098,257 against FTRFS.
@@ -64,10 +64,10 @@ IMAGE_ROOTFS_SIZE ?= "1048576"
 
 ROOTFS_POSTPROCESS_COMMAND:append = " setup_xfstests_ftrfs;"
 setup_xfstests_ftrfs() {
-    # fsck.ftrfs stub - xfstests calls fsck after each test
+    # fsck.ftrfs stub — xfstests calls fsck after each test
     cat > ${IMAGE_ROOTFS}/usr/sbin/fsck.ftrfs << 'FSCKEOF'
 #!/bin/sh
-# fsck.ftrfs stub - FTRFS integrity is guaranteed by RS FEC at mount time
+# fsck.ftrfs stub — FTRFS integrity is guaranteed by RS FEC at mount time
 exit 0
 FSCKEOF
     chmod 755 ${IMAGE_ROOTFS}/usr/sbin/fsck.ftrfs
@@ -84,7 +84,7 @@ export MKFS_OPTIONS="-N 256"
 LOCALEOF
     mkdir -p ${IMAGE_ROOTFS}/mnt/test
 
-    # hostname -s wrapper - BusyBox does not support -s flag
+    # hostname -s wrapper — BusyBox does not support -s flag
     mv ${IMAGE_ROOTFS}/bin/hostname ${IMAGE_ROOTFS}/bin/hostname.busybox
     cat > ${IMAGE_ROOTFS}/bin/hostname << 'HOSTNEOF'
 #!/bin/sh
@@ -96,7 +96,7 @@ fi
 HOSTNEOF
     chmod 755 ${IMAGE_ROOTFS}/bin/hostname
 
-    # grep wrapper - BusyBox does not support -1 (context lines)
+    # grep wrapper — BusyBox does not support -1 (context lines)
     mv ${IMAGE_ROOTFS}/bin/grep ${IMAGE_ROOTFS}/bin/grep.busybox
     cat > ${IMAGE_ROOTFS}/bin/grep << 'GREPEOF'
 #!/bin/sh
@@ -104,7 +104,7 @@ exec /bin/grep.busybox "$@"
 GREPEOF
     chmod 755 ${IMAGE_ROOTFS}/bin/grep
 
-    # local.config - images on rootfs to avoid /tmp space issues
+    # local.config — images on rootfs to avoid /tmp space issues
     sed -i "s|export TMPDIR=/tmp||" ${IMAGE_ROOTFS}/usr/xfstests/local.config
     mkdir -p ${IMAGE_ROOTFS}/usr/xfstests/results
     mkdir -p ${IMAGE_ROOTFS}/mnt/scratch

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 #
-# ftrfsd_0.1.0.bb - FTRFS Radiation Event Journal daemon
+# ftrfsd_0.1.0.bb — FTRFS Radiation Event Journal daemon
 #
 # Userspace daemon that reads the RAF ring buffer from a FTRFS superblock
 # and logs RS correction events to syslog.

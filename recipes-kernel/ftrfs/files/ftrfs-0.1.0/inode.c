@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * FTRFS - Inode operations
+ * FTRFS — Inode operations
  * Author: roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
  */
 
@@ -11,7 +11,7 @@
 #include "ftrfs.h"
 
 /*
- * ftrfs_iget - read inode from disk into VFS
+ * ftrfs_iget — read inode from disk into VFS
  * @sb:  superblock
  * @ino: inode number (1-based)
  *

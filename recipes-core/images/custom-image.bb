@@ -22,7 +22,7 @@ IMAGE_FEATURES:remove = "debug-tweaks"
 IMAGE_FEATURES += "read-only-rootfs"
 
 # Mot de passe root obligatoire sans debug-tweaks
-# Credentials séparés - ne pas versionner credentials.inc
+# Credentials séparés — ne pas versionner credentials.inc
 require credentials.inc
 
 # Option B : ext4 + dm-verity + SELinux enforcing

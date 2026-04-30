@@ -1,7 +1,7 @@
 /*
  * Stub prep_script plugin for cross-compiled Slurm.
  * send_slurmd_conf_lite is only available in slurmd binary,
- * not in libslurm - this stub avoids the dlopen failure.
+ * not in libslurm — this stub avoids the dlopen failure.
  */
 #include <slurm/slurm.h>
 

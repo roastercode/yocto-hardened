@@ -1,4 +1,4 @@
-SUMMARY = "Image HPC - nœud master / login"
+SUMMARY = "Image HPC — nœud master / login"
 LICENSE = "MIT"
 IMAGE_LINK_NAME = "hpc-image-master-${MACHINE}"
 inherit core-image dm-verity-image selinux-image

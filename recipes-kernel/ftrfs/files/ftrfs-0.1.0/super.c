@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * FTRFS - Superblock operations
+ * FTRFS — Superblock operations
  * Author: roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
  */
 
@@ -18,7 +18,7 @@
 static struct kmem_cache *ftrfs_inode_cachep;
 
 /*
- * alloc_inode - allocate a new inode with ftrfs_inode_info embedded
+ * alloc_inode — allocate a new inode with ftrfs_inode_info embedded
  */
 static struct inode *ftrfs_alloc_inode(struct super_block *sb)
 {
@@ -38,7 +38,7 @@ static struct inode *ftrfs_alloc_inode(struct super_block *sb)
 }
 
 /*
- * free_inode - return inode to slab cache (kernel 5.9+ uses free_inode)
+ * free_inode — return inode to slab cache (kernel 5.9+ uses free_inode)
  */
 static void ftrfs_free_inode(struct inode *inode)
 {
@@ -46,7 +46,7 @@ static void ftrfs_free_inode(struct inode *inode)
 }
 
 /*
- * statfs - filesystem statistics
+ * statfs — filesystem statistics
  */
 static int ftrfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
@@ -66,7 +66,7 @@ static int ftrfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 }
 
 /*
- * put_super - release superblock resources
+ * put_super — release superblock resources
  */
 static void ftrfs_put_super(struct super_block *sb)
 {
@@ -82,7 +82,7 @@ static void ftrfs_put_super(struct super_block *sb)
 }
 
 /*
- * evict_inode - called when inode nlink drops to 0 and last reference released
+ * evict_inode — called when inode nlink drops to 0 and last reference released
  * Frees the inode number back to the bitmap.
  */
 /*
@@ -322,7 +322,7 @@ void ftrfs_log_rs_event(struct super_block *sb, u64 block_no, u32 err_bits)
 }
 
 /*
- * ftrfs_fill_super - read superblock from disk and initialize VFS sb
+ * ftrfs_fill_super — read superblock from disk and initialize VFS sb
  */
 int ftrfs_fill_super(struct super_block *sb, struct fs_context *fc)
 {
@@ -339,7 +339,7 @@ int ftrfs_fill_super(struct super_block *sb, struct fs_context *fc)
 		return -EINVAL;
 	}
 
-	/* Read block 0 - superblock */
+	/* Read block 0 — superblock */
 	bh = sb_bread(sb, 0);
 	if (!bh) {
 		errorf(fc, "ftrfs: unable to read superblock");
@@ -499,7 +499,7 @@ out_brelse:
 }
 
 /*
- * fs_context ops - kernel 5.15+ mount API
+ * fs_context ops — kernel 5.15+ mount API
  */
 static int ftrfs_get_tree(struct fs_context *fc)
 {
@@ -507,11 +507,11 @@ static int ftrfs_get_tree(struct fs_context *fc)
 }
 
 /*
- * ftrfs_reconfigure - handle mount -o remount
+ * ftrfs_reconfigure — handle mount -o remount
  *
  * xfstests calls remount,ro after each test to verify filesystem
  * integrity. FTRFS accepts the reconfigure request without
- * taking any action - ro/rw transitions are handled by the VFS.
+ * taking any action — ro/rw transitions are handled by the VFS.
  */
 static int ftrfs_reconfigure(struct fs_context *fc)
 {
@@ -560,7 +560,7 @@ static int __init ftrfs_init(void)
 	BUILD_BUG_ON(sizeof(struct ftrfs_rs_event) != 24);
 	BUILD_BUG_ON(sizeof(struct ftrfs_dir_entry) != 268);
 
-	/* Initialize GF(2^8) tables for RS FEC - once, before any mount */
+	/* Initialize GF(2^8) tables for RS FEC — once, before any mount */
 	ftrfs_rs_init_tables();
 
 	ftrfs_inode_cachep =

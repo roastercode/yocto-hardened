@@ -1,4 +1,4 @@
-SUMMARY = "Image HPC - nœud compute"
+SUMMARY = "Image HPC — nœud compute"
 LICENSE = "MIT"
 
 IMAGE_LINK_NAME = "hpc-image-compute-${MACHINE}"

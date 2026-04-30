@@ -1,5 +1,5 @@
 SUMMARY = "MUNGE authentication service"
-DESCRIPTION = "MUNGE - service d'authentification pour Slurm"
+DESCRIPTION = "MUNGE — service d'authentification pour Slurm"
 HOMEPAGE = "https://dun.github.io/munge/"
 LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504"

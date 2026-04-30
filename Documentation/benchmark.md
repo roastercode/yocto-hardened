@@ -12,7 +12,7 @@ Save as `~/bin/hpc-benchmark.sh` and run after every build.
 
 ```bash
 #!/bin/bash
-# hpc-benchmark.sh - full HPC cluster deploy + benchmark
+# hpc-benchmark.sh — full HPC cluster deploy + benchmark
 # Run after every significant change. Never push without this.
 
 set -e
@@ -182,7 +182,7 @@ done
 ### Munge fails to start
 
 ```bash
-# munge.key missing - check:
+# munge.key missing — check:
 sudo virsh console arm64-master
 ls -la /etc/munge/munge.key
 # Must exist, mode 0400, owned by munge
@@ -202,10 +202,10 @@ $SSH hpcadmin@192.168.56.11 "sudo slurmd > /tmp/slurmd.log 2>&1; sleep 1; cat /t
 The image uses BusyBox `/bin/sh`. Bash-specific syntax is not supported:
 
 ```bash
-# WRONG - bash only
+# WRONG — bash only
 for i in $(seq 1 9); do srun hostname & done; wait
 
-# CORRECT - BusyBox compatible
+# CORRECT — BusyBox compatible
 sh -c '
 srun --nodes=1 hostname &
 srun --nodes=1 hostname &

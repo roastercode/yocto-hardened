@@ -1,5 +1,5 @@
 SUMMARY = "FTRFS userspace formatter"
-DESCRIPTION = "mkfs.ftrfs - format a block device as FTRFS"
+DESCRIPTION = "mkfs.ftrfs — format a block device as FTRFS"
 LICENSE = "GPL-2.0-only"
 LIC_FILES_CHKSUM = "file://COPYING;md5=4c9369db79a4345d581e1a2b9b732941"
 

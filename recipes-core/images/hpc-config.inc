@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 #
-# hpc-config.inc - site-local HPC cluster configuration
+# hpc-config.inc — site-local HPC cluster configuration
 #
 # Copy this file to your build directory or include it from local.conf.
 # All variables have defaults suitable for the reference QEMU lab setup.
@@ -18,7 +18,7 @@ HPC_CLUSTER_NAME ?= "hpclab"
 HPC_MASTER_HOSTNAME ?= "arm64-master"
 HPC_MASTER_IP       ?= "192.168.56.10"
 
-# Compute nodes - extend as needed
+# Compute nodes — extend as needed
 HPC_COMPUTE01_HOSTNAME ?= "arm64-compute01"
 HPC_COMPUTE01_IP       ?= "192.168.56.11"
 

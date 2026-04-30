@@ -1,5 +1,5 @@
 #!/bin/bash
-# hpc-benchmark.sh - full HPC cluster deploy + benchmark
+# hpc-benchmark.sh — full HPC cluster deploy + benchmark
 # Run after every significant build. Never push without this.
 
 set -e

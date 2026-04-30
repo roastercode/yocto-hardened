@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * ftrfsd - FTRFS Radiation Event Journal daemon v3
+ * ftrfsd — FTRFS Radiation Event Journal daemon v3
  *
  * Reads the RAF (Radiation Event Journal) from a FTRFS superblock,
  * signs each correction event with a node-local Ed25519 key, and
